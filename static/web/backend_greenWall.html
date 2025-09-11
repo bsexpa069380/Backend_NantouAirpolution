@@ -2,7 +2,7 @@
 <html lang="zh-Hant">
 <head>
     <meta charset="UTF-8">
-    <title>空氣淨化區後台</title>
+    <title>空氣綠牆後台</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
         .btn-no-underline {
@@ -15,30 +15,13 @@
 </head>
 <body class="container py-4">
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h4 class="fw-bold">空氣淨化區後台列表</h4>
+        <h4 class="fw-bold">空氣綠牆後台列表</h4>
         <a href="admin_dashboard.html" class="btn btn-outline-dark btn-no-underline">回後台首頁</a>
     </div>
-<div class="row">
-  
-    <div class="col-md-6">
+
     <div class="mb-3 text-start">
         <button class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#addModal">新增項目</button>
     </div>
-    </div>
-
-    <div class="col-md-6">
-    <div class="form-check form-switch ms-2 " style="display: flex;justify-content: flex-end;">
-  
-  <label class="form-check-label" for="visibilityToggle">顯示空氣淨化區
-      <input class="form-check-input" type="checkbox" id="visibilityToggle"></label>
-  
-  </div>
-    </div>
-</div>
-
-    
-
-    
 
     <table class="table table-bordered text-center">
         <thead class="table-secondary">
@@ -68,7 +51,7 @@
     <div class="modal-dialog modal-lg modal-dialog-scrollable">
       <div class="modal-content">
         <div class="modal-header">
-          <h5 class="modal-title" id="addModalLabel">新增空氣淨化區項目</h5>
+          <h5 class="modal-title" id="addModalLabel">新增空氣綠牆項目</h5>
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="關閉"></button>
         </div>
         <div class="modal-body">
@@ -156,9 +139,9 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 
-    <script>
+<script>
 // 儲存 API base URL
-const API_BASE = "/api/purification_zones";
+const API_BASE = "/api/green_walls";
 
 // 渲染表格資料
 async function loadData() {
@@ -167,7 +150,7 @@ async function loadData() {
     const tbody = document.querySelector("tbody");
     tbody.innerHTML = "";
 
-    
+  
 
     data.forEach(item => {
         const row = document.createElement("tr");
@@ -194,7 +177,7 @@ document.getElementById("airPurifyForm").addEventListener("submit", async functi
 
   const isEdit = !!id;
   const method = isEdit ? "PUT" : "POST";
-  const url = isEdit ? `/api/purification_zones/${id}` : "/api/purification_zones";
+  const url = isEdit ? `/api/green_walls/${id}` : "/api/green_walls";
 
   try {
     const res = await fetch(url, {
@@ -218,33 +201,30 @@ document.getElementById("airPurifyForm").addEventListener("submit", async functi
         row.querySelector("td:first-child").textContent = item.project_name;
       }
     } else {
-      const emptyRow = document.querySelector("tbody tr td[colspan='3']");
-  if (emptyRow) {
-    emptyRow.parentElement.remove(); // remove the <tr>
-  }
-
-  // ✅ create new row
-  const tbody = document.querySelector("tbody");
-  const newRow = document.createElement("tr");
-  newRow.setAttribute("data-id", item.id);
-  newRow.innerHTML = `
-    <td>${item.project_name}</td>
-    <td><button class="btn btn-sm btn-warning edit-btn">編輯</button></td>
-    <td><button class="btn btn-sm btn-danger delete-btn">刪除</button></td>
-  `;
-  tbody.appendChild(newRow);
+      // ✅ create new row
+      const tbody = document.querySelector("tbody");
+      const newRow = document.createElement("tr");
+      newRow.setAttribute("data-id", item.id);
+      newRow.innerHTML = `
+        <td>${item.project_name}</td>
+        <td><button class="btn btn-sm btn-warning edit-btn">編輯</button></td>
+        <td><button class="btn btn-sm btn-danger delete-btn">刪除</button></td>
+      `;
+      tbody.appendChild(newRow);
     }
 
     showBootstrapToast(`${isEdit ? "更新" : "新增"}成功`, "success");
-    form.removeAttribute("data-editing-id");
+    console.log("AFTER TOAST");
+    form.removeAttribute("data-editing-id"); // reset mode back to create
     form.reset();
   } catch (err) {
     showBootstrapToast(`${isEdit ? "更新" : "新增"}失敗: ${err.message}`, "danger");
     console.error(err);
   }
+  
 });
 
-// 刪除按鈕與編輯按鈕事件委派
+
 document.addEventListener("DOMContentLoaded", function () {
   const tbody = document.querySelector("tbody");
   const form = document.getElementById("airPurifyForm");
@@ -262,7 +242,7 @@ document.addEventListener("DOMContentLoaded", function () {
       const id = row.getAttribute("data-id");
 
       const token = localStorage.getItem("token");
-      const res = await fetch(`/api/purification_zones/${id}`, {
+      const res = await fetch(`/api/green_walls/${id}`, {
         method: "DELETE",
         headers: {
           Authorization: `Bearer ${token}`
@@ -274,8 +254,7 @@ document.addEventListener("DOMContentLoaded", function () {
         showBootstrapToast(`刪除成功`, "success");
       } else {
         const err = await res.json();
-        showBootstrapToast("刪除失敗: ", "danger");
-        console.error(err);
+        showBootstrapToast("刪除失敗: " , "danger");
       }
     }
   });
@@ -288,7 +267,7 @@ document.addEventListener("DOMContentLoaded", function () {
       const token = localStorage.getItem("token");
 
       try {
-        const res = await fetch(`/api/purification_zones/${id}`, {
+        const res = await fetch(`/api/green_walls/${id}`, {
           headers: {
             Authorization: `Bearer ${token}`
           }
@@ -337,7 +316,7 @@ document.addEventListener("DOMContentLoaded", function () {
         editModal.show();
 
       } catch (err) {
-        alert(err.message);
+        showBootstrapToast(err.message, "danger");
       }
     }
   });
@@ -412,7 +391,6 @@ function renderPreviewCards() {
     reader.readAsDataURL(file);
   });
 }
-
 document.getElementById("addModal").addEventListener("hidden.bs.modal", function () {
   const form = document.getElementById("airPurifyForm");
   form.reset();
@@ -454,7 +432,6 @@ function showBootstrapToast(message, type = 'success') {
 // 頁面載入時取得資料
 document.addEventListener("DOMContentLoaded", loadData);
 </script>
-
 <div id="toast-container" class="position-fixed top-0 end-0 p-3" style="z-index: 1100;"></div>
 </body>
 </html>
