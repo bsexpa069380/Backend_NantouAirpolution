@@ -15,6 +15,7 @@ app = Flask(__name__)
 CORS(app)
 
 load_dotenv()
+r2_client()
 # PostgreSQL 資料庫連線設定
 
 
@@ -311,7 +312,54 @@ def delete_zone(id):
     finally:
         cursor.close()
         conn.close()
+
+
+@app.route("/api/greenifications/visibility", methods=["GET"])
+def get_visibility():
+    conn = get_db_connection()
+    cursor = conn.cursor(cursor_factory=RealDictCursor)
+
+    try:
+        cursor.execute("SELECT * FROM settings WHERE section = %s;", ('greenifications',))
+        state = cursor.fetchone()
+        if state:
+            return jsonify({"visible": state['visible']})
+        else:
+            return jsonify({"error": "Section not found"}), 404
     
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+    finally:
+        cursor.close()
+        conn.close()
+
+@app.route("/api/greenifications/visibility", methods=["PUT"])
+@JWT_required
+def update_visibility():
+    conn = get_db_connection()
+    cursor = conn.cursor(cursor_factory=RealDictCursor)
+
+    try:
+        data = request.get_json()
+        visible = data.get("visible", True)
+
+        cursor.execute("UPDATE settings SET visible = %s WHERE section = %s RETURNING *;", (visible, 'greenifications'))
+        state = cursor.fetchone()
+        conn.commit()
+
+        if state:
+            return jsonify({"success": True, "visible": state['visible']})
+        else:
+            return jsonify({"error": "Section not found"}), 404
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+    finally:
+        cursor.close()
+        conn.close()
+
+
 ## ---------------------------------空氣綠牆區 區塊 -------------------------------------------##
 
 # ✅ 取得所有空氣綠牆區
@@ -523,7 +571,22 @@ def delete_greenWall(id):
     finally:
         cursor.close()
         conn.close()
-    
+# @app.route("/api/greenifications/visibility", methods=["GET"])
+# def get_visibility():
+#     # example: from DB
+#     state = db.session.query(Visibility).filter_by(section="greenifications").first()
+#     return jsonify({"visible": state.visible})
+
+# @app.route("/api/greenifications/visibility", methods=["PUT"])
+# @token_required
+# def update_visibility():
+#     data = request.get_json()
+#     visible = data.get("visible", True)
+
+#     state = db.session.query(Visibility).filter_by(section="greenifications").first()
+#     state.visible = visible
+#     db.session.commit()
+#     return jsonify({"success": True, "visible": visible})
 
 ## ---------------------------------綠美化 區塊 -------------------------------------------##
 
@@ -736,6 +799,7 @@ def delete_greenification(id):
     finally:
         cursor.close()
         conn.close()
+
     
 ## ---------------------------------樹種介紹  ------------------------------------------
 @app.post("/api/tree_intros")
@@ -1266,9 +1330,34 @@ def delete_file(id):
     finally:
         cursor.close()
         conn.close()
+### --------------------------------- AREA ARRGEGATION -------------------------------------------##
+@app.route("/api/areas/total", methods=["GET"])
+def get_total_area():
+    conn = get_db_connection()   # however you get your psycopg2 connection
+    cursor = conn.cursor()
 
+    try:
+        cursor.execute("""
+            SELECT 
+                COALESCE((SELECT SUM(area) FROM greenifications), 0) AS greenifications_area,
+                COALESCE((SELECT SUM(area) FROM greenwalls), 0) AS greenwalls_area,
+                COALESCE((SELECT SUM(area) FROM purification_zones), 0) AS purification_zones_area
+        """)
+        row = cursor.fetchone()
 
+        greenifications_area, greenwalls_area, purification_zones_area = row
+        total_area = greenifications_area + greenwalls_area + purification_zones_area
 
+        return jsonify({
+            "greenifications_area": float(greenifications_area),
+            "greenwalls_area": float(greenwalls_area),
+            "purification_zones_area": float(purification_zones_area),
+            "total_area": float(total_area)
+        })
+
+    finally:
+        cursor.close()
+        conn.close()
 
 # 健康檢查
 @app.get("/healthz")

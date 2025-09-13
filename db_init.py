@@ -35,7 +35,7 @@ def db_init():
 
         CREATE TABLE IF NOT EXISTS purification_zones (
             id SERIAL PRIMARY KEY,
-            image_url TEXT,
+            image_urls JSONB,
             serial TEXT NOT NULL,
             year TEXT NOT NULL,
             district TEXT NOT NULL,
