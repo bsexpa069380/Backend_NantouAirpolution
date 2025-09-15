@@ -10,6 +10,7 @@ import datetime
 from functools import wraps
 from r2_utils import r2_upload_file, r2_delete_file,r2_client
 from db_init import db_init, get_db_connection , db_reset
+import json
 
 app = Flask(__name__)
 CORS(app)
@@ -133,6 +134,9 @@ def get_zone(id):
         row = cursor.fetchone()
 
         if row:
+            if row.get("image_urls"):
+                if isinstance(row["image_urls"], str):
+                    row["image_urls"] = json.loads(row["image_urls"])
             return jsonify(row), 200
         else:
             return jsonify({"error": "Not found"}), 404
@@ -153,17 +157,17 @@ def create_zone():
 
     try:
         # 取得圖片（若有上傳）
-        image = request.files.get('image')
-        image_url = None
-        if image:
-            filename = secure_filename(image.filename)
-            upload_folder = "static/uploads"
-            os.makedirs(upload_folder, exist_ok=True)
-            image_path = os.path.join(upload_folder, filename)
-            image.save(image_path)
-            image_url = f"/{image_path}"
+        images = request.files.getlist("images")
+        image_urls = []
 
+        for img in images:
+            if img and img.filename:
+                url = r2_upload_file(img, folder="purification_zones")
+                if url:
+                    image_urls.append(url)
         # 取得表單欄位資料
+
+        image_urls_value = json.dumps(image_urls) if image_urls else None
         data = request.form
 
         cursor.execute("""
@@ -171,7 +175,7 @@ def create_zone():
                 serial, year, district, type, project_name,
                 maintain_unit, area, subsidy, approved_date, gps,
                 subsidy_item, co2_total, co2, tsp, so2,
-                no2, co, ozone, pan, image_url
+                no2, co, ozone, pan, image_urls
             ) VALUES (%s, %s, %s, %s, %s,
                       %s, %s, %s, %s, %s,
                       %s, %s, %s, %s, %s,
@@ -197,7 +201,7 @@ def create_zone():
             data.get("co"),
             data.get("ozone"),
             data.get("pan"),
-            image_url
+            image_urls_value
         ))
 
         new_record = cursor.fetchone()
@@ -223,15 +227,20 @@ def update_zone(id):
         form = request.form
         files = request.files
 
-        image = files.get('image')
-        image_url = None
-        if image:
-            filename = secure_filename(image.filename)
-            upload_folder = "static/uploads"
-            os.makedirs(upload_folder, exist_ok=True)
-            image_path = os.path.join(upload_folder, filename)
-            image.save(image_path)
-            image_url = f"/{image_path}"
+        # ✅ Step 1: Get existing images that user decided to keep
+        existing_images = form.getlist("existing_images")  # frontend must send this as hidden inputs or FormData
+        image_urls = existing_images[:]  # start with these
+
+        # ✅ Step 2: Handle new uploads
+        new_files = request.files.getlist("images")
+        for img in new_files:
+            if img and img.filename:
+                url = r2_upload_file(img, folder="purification_zones")
+                if url:
+                    image_urls.append(url)
+
+        # ✅ Step 3: Convert to JSON for Postgres JSONB
+        image_urls_value = json.dumps(image_urls) if image_urls else None
 
         cursor.execute("""
             UPDATE purification_zones SET
@@ -254,7 +263,7 @@ def update_zone(id):
                 co = %s,
                 ozone = %s,
                 pan = %s,
-                image_url = %s
+                image_urls = %s
             WHERE id = %s
             RETURNING *;
         """, (
@@ -277,7 +286,7 @@ def update_zone(id):
             form.get("co"),
             form.get("ozone"),
             form.get("pan"),
-            image_url,
+            image_urls_value,
             id
         ))
 
@@ -299,22 +308,47 @@ def update_zone(id):
 @jwt_required
 def delete_zone(id):
     conn = get_db_connection()
-    cursor = conn.cursor()
+    cursor = conn.cursor(cursor_factory=RealDictCursor)  # ✅ use dict-like rows
 
     try:
+        # Step 1: Fetch the record first (to get image_urls)
+        cursor.execute("SELECT image_urls FROM purification_zones WHERE id = %s;", (id,))
+        record = cursor.fetchone()
+
+        if not record:
+            return jsonify({"error": "ID not found"}), 404
+
+        # Parse JSONB into Python list
+        image_urls = []
+        if record["image_urls"]:
+            if isinstance(record["image_urls"], str):  # JSON string
+                image_urls = json.loads(record["image_urls"])
+            elif isinstance(record["image_urls"], list):  # already list
+                image_urls = record["image_urls"]
+
+        # Step 2: Delete DB row
         cursor.execute("DELETE FROM purification_zones WHERE id = %s RETURNING *;", (id,))
         deleted = cursor.fetchone()
         conn.commit()
-        return jsonify({"deleted": deleted})
+
+        # Step 3: Delete images from R2
+        for url in image_urls:
+            r2_delete_file(url)
+
+        return jsonify({
+            "deleted": deleted,
+            "images_deleted": image_urls
+        }), 200
+
     except Exception as e:
         conn.rollback()
         return jsonify({"error": str(e)}), 500
+
     finally:
         cursor.close()
         conn.close()
 
-
-@app.route("/api/greenifications/visibility", methods=["GET"])
+@app.route("/api/purification_zones/visibility", methods=["GET"])
 def get_visibility():
     conn = get_db_connection()
     cursor = conn.cursor(cursor_factory=RealDictCursor)
@@ -334,8 +368,8 @@ def get_visibility():
         cursor.close()
         conn.close()
 
-@app.route("/api/greenifications/visibility", methods=["PUT"])
-@JWT_required
+@app.route("/api/purification_zones/visibility", methods=["PUT"])
+@jwt_required
 def update_visibility():
     conn = get_db_connection()
     cursor = conn.cursor(cursor_factory=RealDictCursor)
@@ -369,7 +403,7 @@ def get_all_greenWalls():
     cursor = conn.cursor(cursor_factory=RealDictCursor)
 
     try:
-        cursor.execute("SELECT * FROM green_wall ORDER BY created_at DESC;")
+        cursor.execute("SELECT * FROM green_walls ORDER BY created_at DESC;")
         rows = cursor.fetchall()
         return jsonify(rows), 200
 
@@ -388,10 +422,13 @@ def get_greenWall(id):
     cursor = conn.cursor(cursor_factory=RealDictCursor)
 
     try:
-        cursor.execute("SELECT * FROM green_wall WHERE id = %s;", (id,))
+        cursor.execute("SELECT * FROM green_walls WHERE id = %s;", (id,))
         row = cursor.fetchone()
 
         if row:
+            if row.get("image_urls"):
+                if isinstance(row["image_urls"], str):
+                    row["image_urls"] = json.loads(row["image_urls"])
             return jsonify(row), 200
         else:
             return jsonify({"error": "Not found"}), 404
@@ -403,6 +440,7 @@ def get_greenWall(id):
         cursor.close()
         conn.close()
 
+
 # ✅ 新增資料
 @app.post("/api/green_walls")
 @jwt_required
@@ -412,25 +450,25 @@ def create_greenWall():
 
     try:
         # 取得圖片（若有上傳）
-        image = request.files.get('image')
-        image_url = None
-        if image:
-            filename = secure_filename(image.filename)
-            upload_folder = "static/uploads"
-            os.makedirs(upload_folder, exist_ok=True)
-            image_path = os.path.join(upload_folder, filename)
-            image.save(image_path)
-            image_url = f"/{image_path}"
+        images = request.files.getlist("images")
+        image_urls = []
 
+        for img in images:
+            if img and img.filename:
+                url = r2_upload_file(img, folder="green_walls")
+                if url:
+                    image_urls.append(url)
         # 取得表單欄位資料
+
+        image_urls_value = json.dumps(image_urls) if image_urls else None
         data = request.form
 
         cursor.execute("""
-            INSERT INTO green_wall (
+            INSERT INTO green_walls (
                 serial, year, district, type, project_name,
                 maintain_unit, area, subsidy, approved_date, gps,
                 subsidy_item, co2_total, co2, tsp, so2,
-                no2, co, ozone, pan, image_url
+                no2, co, ozone, pan, image_urls
             ) VALUES (%s, %s, %s, %s, %s,
                       %s, %s, %s, %s, %s,
                       %s, %s, %s, %s, %s,
@@ -456,7 +494,7 @@ def create_greenWall():
             data.get("co"),
             data.get("ozone"),
             data.get("pan"),
-            image_url
+            image_urls_value
         ))
 
         new_record = cursor.fetchone()
@@ -482,18 +520,23 @@ def update_greenWall(id):
         form = request.form
         files = request.files
 
-        image = files.get('image')
-        image_url = None
-        if image:
-            filename = secure_filename(image.filename)
-            upload_folder = "static/uploads"
-            os.makedirs(upload_folder, exist_ok=True)
-            image_path = os.path.join(upload_folder, filename)
-            image.save(image_path)
-            image_url = f"/{image_path}"
+        # ✅ Step 1: Get existing images that user decided to keep
+        existing_images = form.getlist("existing_images")  # frontend must send this as hidden inputs or FormData
+        image_urls = existing_images[:]  # start with these
+
+        # ✅ Step 2: Handle new uploads
+        new_files = request.files.getlist("images")
+        for img in new_files:
+            if img and img.filename:
+                url = r2_upload_file(img, folder="green_walls")
+                if url:
+                    image_urls.append(url)
+
+        # ✅ Step 3: Convert to JSON for Postgres JSONB
+        image_urls_value = json.dumps(image_urls) if image_urls else None
 
         cursor.execute("""
-            UPDATE green_wall SET
+            UPDATE green_walls SET
                 serial = %s,
                 year = %s,
                 district = %s,
@@ -513,7 +556,7 @@ def update_greenWall(id):
                 co = %s,
                 ozone = %s,
                 pan = %s,
-                image_url = %s
+                image_urls = %s
             WHERE id = %s
             RETURNING *;
         """, (
@@ -536,7 +579,7 @@ def update_greenWall(id):
             form.get("co"),
             form.get("ozone"),
             form.get("pan"),
-            image_url,
+            image_urls_value,
             id
         ))
 
@@ -552,41 +595,50 @@ def update_greenWall(id):
         cursor.close()
         conn.close()
 
-
 # ✅ 刪除資料
 @app.delete("/api/green_walls/<int:id>")
 @jwt_required
 def delete_greenWall(id):
     conn = get_db_connection()
-    cursor = conn.cursor()
+    cursor = conn.cursor(cursor_factory=RealDictCursor)  # ✅ use dict-like rows
 
     try:
-        cursor.execute("DELETE FROM green_wall WHERE id = %s RETURNING *;", (id,))
+        # Step 1: Fetch the record first (to get image_urls)
+        cursor.execute("SELECT image_urls FROM green_walls WHERE id = %s;", (id,))
+        record = cursor.fetchone()
+
+        if not record:
+            return jsonify({"error": "ID not found"}), 404
+
+        # Parse JSONB into Python list
+        image_urls = []
+        if record["image_urls"]:
+            if isinstance(record["image_urls"], str):  # JSON string
+                image_urls = json.loads(record["image_urls"])
+            elif isinstance(record["image_urls"], list):  # already list
+                image_urls = record["image_urls"]
+
+        # Step 2: Delete DB row
+        cursor.execute("DELETE FROM green_walls WHERE id = %s RETURNING *;", (id,))
         deleted = cursor.fetchone()
         conn.commit()
-        return jsonify({"deleted": deleted})
+
+        # Step 3: Delete images from R2
+        for url in image_urls:
+            r2_delete_file(url)
+
+        return jsonify({
+            "deleted": deleted,
+            "images_deleted": image_urls
+        }), 200
+
     except Exception as e:
         conn.rollback()
         return jsonify({"error": str(e)}), 500
+
     finally:
         cursor.close()
         conn.close()
-# @app.route("/api/greenifications/visibility", methods=["GET"])
-# def get_visibility():
-#     # example: from DB
-#     state = db.session.query(Visibility).filter_by(section="greenifications").first()
-#     return jsonify({"visible": state.visible})
-
-# @app.route("/api/greenifications/visibility", methods=["PUT"])
-# @token_required
-# def update_visibility():
-#     data = request.get_json()
-#     visible = data.get("visible", True)
-
-#     state = db.session.query(Visibility).filter_by(section="greenifications").first()
-#     state.visible = visible
-#     db.session.commit()
-#     return jsonify({"success": True, "visible": visible})
 
 ## ---------------------------------綠美化 區塊 -------------------------------------------##
 
@@ -616,10 +668,13 @@ def get_greenification(id):
     cursor = conn.cursor(cursor_factory=RealDictCursor)
 
     try:
-        cursor.execute("SELECT * FROM greenification WHERE id = %s;", (id,))
+        cursor.execute("SELECT * FROM greenifications WHERE id = %s;", (id,))
         row = cursor.fetchone()
 
         if row:
+            if row.get("image_urls"):
+                if isinstance(row["image_urls"], str):
+                    row["image_urls"] = json.loads(row["image_urls"])
             return jsonify(row), 200
         else:
             return jsonify({"error": "Not found"}), 404
@@ -640,25 +695,25 @@ def create_greenification():
 
     try:
         # 取得圖片（若有上傳）
-        image = request.files.get('image')
-        image_url = None
-        if image:
-            filename = secure_filename(image.filename)
-            upload_folder = "static/uploads"
-            os.makedirs(upload_folder, exist_ok=True)
-            image_path = os.path.join(upload_folder, filename)
-            image.save(image_path)
-            image_url = f"/{image_path}"
+        images = request.files.getlist("images")
+        image_urls = []
 
+        for img in images:
+            if img and img.filename:
+                url = r2_upload_file(img, folder="greenifications")
+                if url:
+                    image_urls.append(url)
         # 取得表單欄位資料
+
+        image_urls_value = json.dumps(image_urls) if image_urls else None
         data = request.form
 
         cursor.execute("""
-            INSERT INTO greenification (
+            INSERT INTO greenifications (
                 serial, year, district, type, project_name,
                 maintain_unit, area, subsidy, approved_date, gps,
                 subsidy_item, co2_total, co2, tsp, so2,
-                no2, co, ozone, pan, image_url
+                no2, co, ozone, pan, image_urls
             ) VALUES (%s, %s, %s, %s, %s,
                       %s, %s, %s, %s, %s,
                       %s, %s, %s, %s, %s,
@@ -684,7 +739,7 @@ def create_greenification():
             data.get("co"),
             data.get("ozone"),
             data.get("pan"),
-            image_url
+            image_urls_value
         ))
 
         new_record = cursor.fetchone()
@@ -710,18 +765,23 @@ def update_greenification(id):
         form = request.form
         files = request.files
 
-        image = files.get('image')
-        image_url = None
-        if image:
-            filename = secure_filename(image.filename)
-            upload_folder = "static/uploads"
-            os.makedirs(upload_folder, exist_ok=True)
-            image_path = os.path.join(upload_folder, filename)
-            image.save(image_path)
-            image_url = f"/{image_path}"
+        # ✅ Step 1: Get existing images that user decided to keep
+        existing_images = form.getlist("existing_images")  # frontend must send this as hidden inputs or FormData
+        image_urls = existing_images[:]  # start with these
+
+        # ✅ Step 2: Handle new uploads
+        new_files = request.files.getlist("images")
+        for img in new_files:
+            if img and img.filename:
+                url = r2_upload_file(img, folder="green_walls")
+                if url:
+                    image_urls.append(url)
+
+        # ✅ Step 3: Convert to JSON for Postgres JSONB
+        image_urls_value = json.dumps(image_urls) if image_urls else None
 
         cursor.execute("""
-            UPDATE greenification SET
+            UPDATE green_walls SET
                 serial = %s,
                 year = %s,
                 district = %s,
@@ -741,7 +801,7 @@ def update_greenification(id):
                 co = %s,
                 ozone = %s,
                 pan = %s,
-                image_url = %s
+                image_urls = %s
             WHERE id = %s
             RETURNING *;
         """, (
@@ -764,7 +824,7 @@ def update_greenification(id):
             form.get("co"),
             form.get("ozone"),
             form.get("pan"),
-            image_url,
+            image_urls_value,
             id
         ))
 
@@ -786,16 +846,42 @@ def update_greenification(id):
 @jwt_required
 def delete_greenification(id):
     conn = get_db_connection()
-    cursor = conn.cursor()
+    cursor = conn.cursor(cursor_factory=RealDictCursor)  # ✅ use dict-like rows
 
     try:
-        cursor.execute("DELETE FROM greenification WHERE id = %s RETURNING *;", (id,))
+        # Step 1: Fetch the record first (to get image_urls)
+        cursor.execute("SELECT image_urls FROM greenifications WHERE id = %s;", (id,))
+        record = cursor.fetchone()
+
+        if not record:
+            return jsonify({"error": "ID not found"}), 404
+
+        # Parse JSONB into Python list
+        image_urls = []
+        if record["image_urls"]:
+            if isinstance(record["image_urls"], str):  # JSON string
+                image_urls = json.loads(record["image_urls"])
+            elif isinstance(record["image_urls"], list):  # already list
+                image_urls = record["image_urls"]
+
+        # Step 2: Delete DB row
+        cursor.execute("DELETE FROM greenifications WHERE id = %s RETURNING *;", (id,))
         deleted = cursor.fetchone()
         conn.commit()
-        return jsonify({"deleted": deleted})
+
+        # Step 3: Delete images from R2
+        for url in image_urls:
+            r2_delete_file(url)
+
+        return jsonify({
+            "deleted": deleted,
+            "images_deleted": image_urls
+        }), 200
+
     except Exception as e:
         conn.rollback()
         return jsonify({"error": str(e)}), 500
+
     finally:
         cursor.close()
         conn.close()

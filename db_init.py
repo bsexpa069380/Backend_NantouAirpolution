@@ -58,9 +58,9 @@ def db_init():
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
 
-        CREATE TABLE IF NOT EXISTS green_wall (
+        CREATE TABLE IF NOT EXISTS green_walls (
             id SERIAL PRIMARY KEY,
-            image_url TEXT,
+            image_urls JSONB,
             serial TEXT NOT NULL,
             year TEXT NOT NULL,
             district TEXT NOT NULL,
@@ -83,9 +83,9 @@ def db_init():
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
 
-        CREATE TABLE IF NOT EXISTS greenification (
+        CREATE TABLE IF NOT EXISTS greenifications (
             id SERIAL PRIMARY KEY,
-            image_url TEXT,
+            image_urls JSONB,
             serial TEXT NOT NULL,
             year TEXT NOT NULL,
             district TEXT NOT NULL,
