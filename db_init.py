@@ -137,7 +137,7 @@ def db_init():
             title TEXT NOT NULL,
             date DATE NOT NULL,
             note TEXT NOT NULL,
-            file TEXT
+            file_url TEXT
         );
 
         CREATE TABLE IF NOT EXISTS settings (

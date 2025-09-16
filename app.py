@@ -895,15 +895,16 @@ def create_tree_intro():
     cursor = conn.cursor(cursor_factory=RealDictCursor)
 
     try:
-        data = request.form
         image = request.files.get("image")
         image_url = None
 
-        # if image:
-        #     filename = secure_filename(image.filename)
-        #     image_path = os.path.join(UPLOAD_FOLDER, filename)
-        #     image.save(image_path)
-        #     image_url = f"/{image_path}"
+        if image and image.filename:
+            url = r2_upload_file(image, folder="tree_intros")
+            if url:
+                image_url = url
+
+        # 取得表單欄位資料 
+        data = request.form
 
         cursor.execute("""
             INSERT INTO tree_intros (title, date, content, image_url)
@@ -951,11 +952,15 @@ def get_tree_intro(id):
 
     try:
         cursor.execute("SELECT * FROM tree_intros WHERE id = %s;", (id,))
-        data = cursor.fetchone()
-        if data:
-            return jsonify(data)
+        row = cursor.fetchone()
+        if row:
+            # ✅ For single image, just return as-is
+            # row["image_url"] will already be a string (or None)
+            return jsonify(row), 200
         else:
             return jsonify({"error": "找不到資料"}), 404
+        
+        
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
@@ -973,11 +978,9 @@ def update_tree_intro(id):
         image = request.files.get("image")
         image_url = None
 
-        if image:
-            filename = secure_filename(image.filename)
-            image_path = os.path.join(UPLOAD_FOLDER, filename)
-            image.save(image_path)
-            image_url = f"/{image_path}"
+        # ✅ Upload to R2 if a new image is provided
+        if image and image.filename:
+            image_url = r2_upload_file(image, folder="tree_intros")
 
         cursor.execute("""
             UPDATE tree_intros
@@ -991,7 +994,7 @@ def update_tree_intro(id):
             data.get("title"),
             data.get("date"),
             data.get("content"),
-            image_url,
+            image_url,  # new R2 url or None → keep old if None
             id
         ))
 
@@ -999,7 +1002,7 @@ def update_tree_intro(id):
         conn.commit()
 
         if updated:
-            return jsonify(updated)
+            return jsonify(updated), 200
         else:
             return jsonify({"error": "ID 不存在"}), 404
 
@@ -1013,144 +1016,32 @@ def update_tree_intro(id):
 @app.delete("/api/tree_intros/<int:id>")
 def delete_tree_intro(id):
     conn = get_db_connection()
-    cursor = conn.cursor()
+    cursor = conn.cursor(cursor_factory=RealDictCursor)  # ✅ so we can use dict access
 
     try:
+        # ✅ Step 1: Fetch the record first
+        cursor.execute("SELECT image_url FROM tree_intros WHERE id = %s;", (id,))
+        record = cursor.fetchone()
+
+        if not record:
+            return jsonify({"error": "ID 不存在"}), 404
+
+        image_url = record.get("image_url")
+
+        # ✅ Step 2: Delete DB row
         cursor.execute("DELETE FROM tree_intros WHERE id = %s RETURNING id;", (id,))
         deleted = cursor.fetchone()
         conn.commit()
 
-        if deleted:
-            return jsonify({"message": "刪除成功"})
-        else:
-            return jsonify({"error": "ID 不存在"}), 404
+        # ✅ Step 3: Clean up R2 if image exists
+        if image_url:
+            r2_delete_file(image_url)
 
-    except Exception as e:
-        conn.rollback()
-        return jsonify({"error": str(e)}), 500
-
-    finally:
-        cursor.close()
-        conn.close()
-
-## ---------------------------------公告區塊  ------------------------------------------
-@app.post("/api/announcement")
-@jwt_required
-def create_announcement():
-    conn = get_db_connection()
-    cursor = conn.cursor(cursor_factory=RealDictCursor)
-
-    try:
-        data = request.form
-        cursor.execute("""
-            INSERT INTO announcement (title, date, content)
-            VALUES (%s, %s, %s)
-            RETURNING *;
-        """, (
-            data.get("title"),
-            data.get("date"),
-            data.get("content")
-        ))
-
-        new_data = cursor.fetchone()
-        conn.commit()
-        return jsonify(new_data), 201
-
-    except Exception as e:
-        conn.rollback()
-        return jsonify({"error": str(e)}), 500
-
-    finally:
-        cursor.close()
-        conn.close()
-
-@app.get("/api/announcement")
-def get_announcements():
-    conn = get_db_connection()
-    cursor = conn.cursor(cursor_factory=RealDictCursor)
-
-    try:
-        cursor.execute("SELECT * FROM announcement ORDER BY id DESC;")
-        data = cursor.fetchall()
-        return jsonify(data)
-
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
-
-    finally:
-        cursor.close()
-        conn.close()
-@app.get("/api/announcement/<int:id>")
-def get_announcement(id):
-    conn = get_db_connection()
-    cursor = conn.cursor(cursor_factory=RealDictCursor)
-
-    try:
-        cursor.execute("SELECT * FROM announcement WHERE id = %s;", (id,))
-        data = cursor.fetchone()
-        if data:
-            return jsonify(data)
-        else:
-            return jsonify({"error": "找不到資料"}), 404
-
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
-
-    finally:
-        cursor.close()
-        conn.close()
-@app.put("/api/announcement/<int:id>")
-def update_announcement_intro(id):
-    conn = get_db_connection()
-    cursor = conn.cursor(cursor_factory=RealDictCursor)
-
-    try:
-        data = request.form
-        
-
-        cursor.execute("""
-            UPDATE announcement
-            SET title = %s,
-                date = %s,
-                content = %s,
-            WHERE id = %s
-            RETURNING *;
-        """, (
-            data.get("title"),
-            data.get("date"),
-            data.get("content"),
-            id
-        ))
-
-        updated = cursor.fetchone()
-        conn.commit()
-
-        if updated:
-            return jsonify(updated)
-        else:
-            return jsonify({"error": "ID 不存在"}), 404
-
-    except Exception as e:
-        conn.rollback()
-        return jsonify({"error": str(e)}), 500
-
-    finally:
-        cursor.close()
-        conn.close()
-@app.delete("/api/announcement/<int:id>")
-def delete_announcement(id):
-    conn = get_db_connection()
-    cursor = conn.cursor()
-
-    try:
-        cursor.execute("DELETE FROM announcement WHERE id = %s RETURNING id;", (id,))
-        deleted = cursor.fetchone()
-        conn.commit()
-
-        if deleted:
-            return jsonify({"message": "刪除成功"})
-        else:
-            return jsonify({"error": "ID 不存在"}), 404
+        return jsonify({
+            "message": "刪除成功",
+            "deleted_id": deleted["id"],
+            "deleted_image": image_url
+        }), 200
 
     except Exception as e:
         conn.rollback()
@@ -1170,15 +1061,26 @@ def create_result():
     cursor = conn.cursor(cursor_factory=RealDictCursor)
 
     try:
+        image = request.files.get("image")
+        image_url = None
+
+        if image and image.filename:
+            url = r2_upload_file(image, folder="results")
+            if url:
+                image_url = url
+
+        # 取得表單欄位資料 
         data = request.form
+
         cursor.execute("""
-            INSERT INTO result (title, date, content)
-            VALUES (%s, %s, %s)
+            INSERT INTO result (title, date, content, image_url)
+            VALUES (%s, %s, %s, %s)
             RETURNING *;
         """, (
             data.get("title"),
             data.get("date"),
-            data.get("content")
+            data.get("content"),
+            image_url
         ))
 
         new_data = cursor.fetchone()
@@ -1192,6 +1094,7 @@ def create_result():
     finally:
         cursor.close()
         conn.close()
+
 
 @app.get("/api/result")
 def get_results():
@@ -1216,11 +1119,15 @@ def get_result(id):
 
     try:
         cursor.execute("SELECT * FROM result WHERE id = %s;", (id,))
-        data = cursor.fetchone()
-        if data:
-            return jsonify(data)
+        row = cursor.fetchone()
+        if row:
+            # ✅ For single image, just return as-is
+            # row["image_url"] will already be a string (or None)
+            return jsonify(row), 200
         else:
             return jsonify({"error": "找不到資料"}), 404
+        
+        
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
@@ -1228,6 +1135,7 @@ def get_result(id):
     finally:
         cursor.close()
         conn.close()
+    
 @app.put("/api/result/<int:id>")
 def update_result_intro(id):
     conn = get_db_connection()
@@ -1235,19 +1143,26 @@ def update_result_intro(id):
 
     try:
         data = request.form
-        
+        image = request.files.get("image")
+        image_url = None
+
+        # ✅ Upload to R2 if a new image is provided
+        if image and image.filename:
+            image_url = r2_upload_file(image, folder="results")
 
         cursor.execute("""
             UPDATE result
             SET title = %s,
                 date = %s,
-                content = %s
+                content = %s,
+                image_url = COALESCE(%s, image_url)
             WHERE id = %s
             RETURNING *;
         """, (
             data.get("title"),
             data.get("date"),
             data.get("content"),
+            image_url,  # new R2 url or None → keep old if None
             id
         ))
 
@@ -1255,7 +1170,7 @@ def update_result_intro(id):
         conn.commit()
 
         if updated:
-            return jsonify(updated)
+            return jsonify(updated), 200
         else:
             return jsonify({"error": "ID 不存在"}), 404
 
@@ -1266,20 +1181,36 @@ def update_result_intro(id):
     finally:
         cursor.close()
         conn.close()
+    
 @app.delete("/api/result/<int:id>")
 def delete_result(id):
     conn = get_db_connection()
-    cursor = conn.cursor()
+    cursor = conn.cursor(cursor_factory=RealDictCursor)  # ✅ so we can use dict access
 
     try:
+        # ✅ Step 1: Fetch the record first
+        cursor.execute("SELECT image_url FROM result WHERE id = %s;", (id,))
+        record = cursor.fetchone()
+
+        if not record:
+            return jsonify({"error": "ID 不存在"}), 404
+
+        image_url = record.get("image_url")
+
+        # ✅ Step 2: Delete DB row
         cursor.execute("DELETE FROM result WHERE id = %s RETURNING id;", (id,))
         deleted = cursor.fetchone()
         conn.commit()
 
-        if deleted:
-            return jsonify({"message": "刪除成功"})
-        else:
-            return jsonify({"error": "ID 不存在"}), 404
+        # ✅ Step 3: Clean up R2 if image exists
+        if image_url:
+            r2_delete_file(image_url)
+
+        return jsonify({
+            "message": "刪除成功",
+            "deleted_id": deleted["id"],
+            "deleted_image": image_url
+        }), 200
 
     except Exception as e:
         conn.rollback()
@@ -1298,15 +1229,26 @@ def create_file():
     cursor = conn.cursor(cursor_factory=RealDictCursor)
 
     try:
+        file = request.files.get("file")
+        file_url = None
+
+        if file and file.filename:
+            url = r2_upload_file(file, folder="files")
+            if url:
+                file_url = url
+
+        # 取得表單欄位資料 
         data = request.form
+
         cursor.execute("""
-            INSERT INTO files (title, date, note)
-            VALUES (%s, %s, %s)
+            INSERT INTO files (title, date, note, file_url)
+            VALUES (%s, %s, %s, %s)
             RETURNING *;
         """, (
             data.get("title"),
             data.get("date"),
-            data.get("note")
+            data.get("note"),
+            file_url
         ))
 
         new_data = cursor.fetchone()
@@ -1320,7 +1262,6 @@ def create_file():
     finally:
         cursor.close()
         conn.close()
-
 @app.get("/api/file")
 def get_files():
     conn = get_db_connection()
@@ -1344,11 +1285,14 @@ def get_file(id):
 
     try:
         cursor.execute("SELECT * FROM files WHERE id = %s;", (id,))
-        data = cursor.fetchone()
-        if data:
-            return jsonify(data)
+        row = cursor.fetchone()
+        if row:
+            # ✅ For single file, just return as-is
+            # row["file_url"] will already be a string (or None)
+            return jsonify(row), 200
         else:
             return jsonify({"error": "找不到資料"}), 404
+    
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
@@ -1363,19 +1307,26 @@ def update_file_intro(id):
 
     try:
         data = request.form
-        
+        file = request.files.get("file")
+        file_url = None
+
+        # ✅ Upload to R2 if a new file is provided
+        if file and file.filename:
+            file_url = r2_upload_file(file, folder="files")
 
         cursor.execute("""
             UPDATE files
             SET title = %s,
                 date = %s,
-                note = %s
+                note = %s,
+                file_url = COALESCE(%s, file_url)
             WHERE id = %s
             RETURNING *;
         """, (
             data.get("title"),
             data.get("date"),
             data.get("note"),
+            file_url,  # new R2 url or None → keep old if None
             id
         ))
 
@@ -1383,7 +1334,7 @@ def update_file_intro(id):
         conn.commit()
 
         if updated:
-            return jsonify(updated)
+            return jsonify(updated), 200
         else:
             return jsonify({"error": "ID 不存在"}), 404
 
@@ -1397,17 +1348,32 @@ def update_file_intro(id):
 @app.delete("/api/file/<int:id>")
 def delete_file(id):
     conn = get_db_connection()
-    cursor = conn.cursor()
+    cursor = conn.cursor(cursor_factory=RealDictCursor)  # ✅ so we can use dict access
 
     try:
+        # ✅ Step 1: Fetch the record first
+        cursor.execute("SELECT file_url FROM files WHERE id = %s;", (id,))
+        record = cursor.fetchone()
+
+        if not record:
+            return jsonify({"error": "ID 不存在"}), 404
+
+        file_url = record.get("file_url")
+
+        # ✅ Step 2: Delete DB row
         cursor.execute("DELETE FROM files WHERE id = %s RETURNING id;", (id,))
         deleted = cursor.fetchone()
         conn.commit()
 
-        if deleted:
-            return jsonify({"message": "刪除成功"})
-        else:
-            return jsonify({"error": "ID 不存在"}), 404
+        # ✅ Step 3: Clean up R2 if file exists
+        if file_url:
+            r2_delete_file(file_url)
+
+        return jsonify({
+            "message": "刪除成功",
+            "deleted_id": deleted["id"],
+            "deleted_file": file_url
+        }), 200
 
     except Exception as e:
         conn.rollback()
