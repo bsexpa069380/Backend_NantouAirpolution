@@ -173,13 +173,13 @@ def create_zone():
         cursor.execute("""
             INSERT INTO purification_zones (
                 serial, year, district, type, project_name,
-                maintain_unit, area, subsidy, approved_date, gps,
-                subsidy_item, co2_total, co2, tsp, so2,
-                no2, co, ozone, pan, image_urls
+                maintain_unit, adopt_unit, area, length, maintain_start_date,
+                maintain_end_date, gps,annotation,
+                subsidy_source, image_urls
             ) VALUES (%s, %s, %s, %s, %s,
                       %s, %s, %s, %s, %s,
-                      %s, %s, %s, %s, %s,
-                      %s, %s, %s, %s, %s)
+                      %s, %s, %s, %s, %s
+                      )
             RETURNING *;
         """, (
             data.get("serial"),
@@ -188,19 +188,15 @@ def create_zone():
             data.get("type"),
             data.get("project_name"),
             data.get("maintain_unit"),
+            data.get("adopt_unit"),
             data.get("area"),
-            data.get("subsidy"),
-            data.get("approved_date"),
+            data.get("length"),
+            data.get("maintain_start_date"),
+            data.get("maintain_end_date"),
             data.get("gps"),
-            data.get("subsidy_item"),
-            data.get("co2_total"),
-            data.get("co2"),
-            data.get("tsp"),
-            data.get("so2"),
-            data.get("no2"),
-            data.get("co"),
-            data.get("ozone"),
-            data.get("pan"),
+            data.get("annotation"),
+            data.get("subsidy_source"),
+        
             image_urls_value
         ))
 
@@ -250,19 +246,14 @@ def update_zone(id):
                 type = %s,
                 project_name = %s,
                 maintain_unit = %s,
+                adopt_unit = %s,
                 area = %s,
-                subsidy = %s,
-                approved_date = %s,
+                length = %s,
+                maintain_start_date = %s,
+                maintain_end_date = %s,
                 gps = %s,
-                subsidy_item = %s,
-                co2_total = %s,
-                co2 = %s,
-                tsp = %s,
-                so2 = %s,
-                no2 = %s,
-                co = %s,
-                ozone = %s,
-                pan = %s,
+                subsidy_source = %s,
+                annotation = %s,
                 image_urls = %s
             WHERE id = %s
             RETURNING *;
@@ -273,19 +264,14 @@ def update_zone(id):
             form.get("type"),
             form.get("project_name"),
             form.get("maintain_unit"),
+            form.get("adopt_unit"),
             form.get("area"),
-            form.get("subsidy"),
-            form.get("approved_date"),
+            form.get("length"),
+            form.get("maintain_start_date"),
+            form.get("maintain_end_date"),
             form.get("gps"),
-            form.get("subsidy_item"),
-            form.get("co2_total"),
-            form.get("co2"),
-            form.get("tsp"),
-            form.get("so2"),
-            form.get("no2"),
-            form.get("co"),
-            form.get("ozone"),
-            form.get("pan"),
+            form.get("subsidy_source"),
+            form.get("annotation"),
             image_urls_value,
             id
         ))
@@ -466,13 +452,13 @@ def create_greenWall():
         cursor.execute("""
             INSERT INTO green_walls (
                 serial, year, district, type, project_name,
-                maintain_unit, area, subsidy, approved_date, gps,
-                subsidy_item, co2_total, co2, tsp, so2,
-                no2, co, ozone, pan, image_urls
+                maintain_unit, adopt_unit, area, length, maintain_start_date,
+                maintain_end_date, gps,annotation,
+                subsidy_source, image_urls
             ) VALUES (%s, %s, %s, %s, %s,
                       %s, %s, %s, %s, %s,
-                      %s, %s, %s, %s, %s,
-                      %s, %s, %s, %s, %s)
+                      %s, %s, %s, %s, %s
+                      )
             RETURNING *;
         """, (
             data.get("serial"),
@@ -481,19 +467,15 @@ def create_greenWall():
             data.get("type"),
             data.get("project_name"),
             data.get("maintain_unit"),
+            data.get("adopt_unit"),
             data.get("area"),
-            data.get("subsidy"),
-            data.get("approved_date"),
+            data.get("length"),
+            data.get("maintain_start_date"),
+            data.get("maintain_end_date"),
             data.get("gps"),
-            data.get("subsidy_item"),
-            data.get("co2_total"),
-            data.get("co2"),
-            data.get("tsp"),
-            data.get("so2"),
-            data.get("no2"),
-            data.get("co"),
-            data.get("ozone"),
-            data.get("pan"),
+            data.get("annotation"),
+            data.get("subsidy_source"),
+        
             image_urls_value
         ))
 
@@ -543,19 +525,14 @@ def update_greenWall(id):
                 type = %s,
                 project_name = %s,
                 maintain_unit = %s,
+                adopt_unit = %s,
                 area = %s,
-                subsidy = %s,
-                approved_date = %s,
+                length = %s,
+                maintain_start_date = %s,
+                maintain_end_date = %s,
                 gps = %s,
-                subsidy_item = %s,
-                co2_total = %s,
-                co2 = %s,
-                tsp = %s,
-                so2 = %s,
-                no2 = %s,
-                co = %s,
-                ozone = %s,
-                pan = %s,
+                subsidy_source = %s,
+                annotation = %s,
                 image_urls = %s
             WHERE id = %s
             RETURNING *;
@@ -566,19 +543,14 @@ def update_greenWall(id):
             form.get("type"),
             form.get("project_name"),
             form.get("maintain_unit"),
+            form.get("adopt_unit"),
             form.get("area"),
-            form.get("subsidy"),
-            form.get("approved_date"),
+            form.get("length"),
+            form.get("maintain_start_date"),
+            form.get("maintain_end_date"),
             form.get("gps"),
-            form.get("subsidy_item"),
-            form.get("co2_total"),
-            form.get("co2"),
-            form.get("tsp"),
-            form.get("so2"),
-            form.get("no2"),
-            form.get("co"),
-            form.get("ozone"),
-            form.get("pan"),
+            form.get("subsidy_source"),
+            form.get("annotation"),
             image_urls_value,
             id
         ))
@@ -649,7 +621,7 @@ def get_all_greenifications():
     cursor = conn.cursor(cursor_factory=RealDictCursor)
 
     try:
-        cursor.execute("SELECT * FROM greenification ORDER BY created_at DESC;")
+        cursor.execute("SELECT * FROM greenifications ORDER BY created_at DESC;")
         rows = cursor.fetchall()
         return jsonify(rows), 200
 
@@ -711,13 +683,13 @@ def create_greenification():
         cursor.execute("""
             INSERT INTO greenifications (
                 serial, year, district, type, project_name,
-                maintain_unit, area, subsidy, approved_date, gps,
-                subsidy_item, co2_total, co2, tsp, so2,
-                no2, co, ozone, pan, image_urls
+                maintain_unit, adopt_unit, area, length, maintain_start_date,
+                maintain_end_date, gps,annotation,
+                subsidy_source, image_urls
             ) VALUES (%s, %s, %s, %s, %s,
                       %s, %s, %s, %s, %s,
-                      %s, %s, %s, %s, %s,
-                      %s, %s, %s, %s, %s)
+                      %s, %s, %s, %s, %s
+                      )
             RETURNING *;
         """, (
             data.get("serial"),
@@ -726,19 +698,15 @@ def create_greenification():
             data.get("type"),
             data.get("project_name"),
             data.get("maintain_unit"),
+            data.get("adopt_unit"),
             data.get("area"),
-            data.get("subsidy"),
-            data.get("approved_date"),
+            data.get("length"),
+            data.get("maintain_start_date"),
+            data.get("maintain_end_date"),
             data.get("gps"),
-            data.get("subsidy_item"),
-            data.get("co2_total"),
-            data.get("co2"),
-            data.get("tsp"),
-            data.get("so2"),
-            data.get("no2"),
-            data.get("co"),
-            data.get("ozone"),
-            data.get("pan"),
+            data.get("annotation"),
+            data.get("subsidy_source"),
+        
             image_urls_value
         ))
 
@@ -781,26 +749,21 @@ def update_greenification(id):
         image_urls_value = json.dumps(image_urls) if image_urls else None
 
         cursor.execute("""
-            UPDATE green_walls SET
+            UPDATE greenifications SET
                 serial = %s,
                 year = %s,
                 district = %s,
                 type = %s,
                 project_name = %s,
                 maintain_unit = %s,
+                adopt_unit = %s,
                 area = %s,
-                subsidy = %s,
-                approved_date = %s,
+                length = %s,
+                maintain_start_date = %s,
+                maintain_end_date = %s,
                 gps = %s,
-                subsidy_item = %s,
-                co2_total = %s,
-                co2 = %s,
-                tsp = %s,
-                so2 = %s,
-                no2 = %s,
-                co = %s,
-                ozone = %s,
-                pan = %s,
+                subsidy_source = %s,
+                annotation = %s,
                 image_urls = %s
             WHERE id = %s
             RETURNING *;
@@ -811,26 +774,24 @@ def update_greenification(id):
             form.get("type"),
             form.get("project_name"),
             form.get("maintain_unit"),
+            form.get("adopt_unit"),
             form.get("area"),
-            form.get("subsidy"),
-            form.get("approved_date"),
+            form.get("length"),
+            form.get("maintain_start_date"),
+            form.get("maintain_end_date"),
             form.get("gps"),
-            form.get("subsidy_item"),
-            form.get("co2_total"),
-            form.get("co2"),
-            form.get("tsp"),
-            form.get("so2"),
-            form.get("no2"),
-            form.get("co"),
-            form.get("ozone"),
-            form.get("pan"),
+            form.get("subsidy_source"),
+            form.get("annotation"),
             image_urls_value,
             id
         ))
 
         updated = cursor.fetchone()
         conn.commit()
-        return jsonify(updated), 200 if updated else (jsonify({"error": "ID not found"}), 404)
+        if updated:
+            return jsonify(updated), 200
+        else:
+            return jsonify({"error": "ID not found"}), 404
 
     except Exception as e:
         conn.rollback()

@@ -70,8 +70,11 @@
   
                 <label class="form-label">設置年度</label>
                 <input type="text" class="form-control mb-3" id="year" name="year">
+
+                <label class="form-label">設置經費來源</label>
+                <input type="text" class="form-control mb-3" id="subsidy_source" name="subsidy_source">
   
-                <label class="form-label">行政區</label>
+                <label class="form-label">鄉鎮別</label>
                 <input type="text" class="form-control mb-3" id="district" name="district">
   
                 <label class="form-label">類別</label>
@@ -85,23 +88,27 @@
   
                 <label class="form-label">基地面積 (平方公尺)</label>
                 <input type="text" class="form-control mb-3" id="area" name="area">
-  
-                <label class="form-label">補助金額 (元)</label>
-                <input type="text" class="form-control mb-3" id="subsidy" name="subsidy">
-  
-                <label class="form-label">核定日期</label>
-                <input type="date" class="form-control mb-3" id="approved_date" name="approved_date">
+
+                <label class="form-label">基地長度 (公尺)</label>
+                <input type="text" class="form-control mb-3" id="length" name="length">
+
+                <label class="form-label">認養單位</label>
+                <input type="text" class="form-control mb-3" id="adopt_unit" name="adopt_unit">
+
+                <label class="form-label">認養開始日期</label>
+                <input type="date" class="form-control mb-3" id="maintain_start_date" name="maintain_start_date">
+
+                <label class="form-label">認養結束日期</label>
+                <input type="date" class="form-control mb-3" id="maintain_end_date" name="maintain_end_date">
   
                 <label class="form-label">GPS 座標</label>
                 <input type="text" class="form-control mb-3" id="gps" name="gps">
   
-                <label class="form-label">補助項目</label>
-                <input type="text" class="form-control mb-3" id="subsidy_item" name="subsidy_item">
+                <label class="form-label">說明</label>
+                <input type="text" class="form-control mb-3" id="annotation" name="annotation">
   
-                <label class="form-label">碳匯資料 CO2 總量</label>
-                <input type="text" class="form-control mb-3" id="co2_total" name="co2_total">
               </div>
-              <div class="col-md-6">
+              <!-- <div class="col-md-6">
                 <label class="form-label">二氧化碳 CO2</label>
                 <input type="text" class="form-control mb-3" id="co2" name="co2">
   
@@ -122,7 +129,7 @@
   
                 <label class="form-label">過氧硝酸乙醯酯 PAN</label>
                 <input type="text" class="form-control mb-3" id="pan" name="pan">
-              </div>
+              </div> -->
             </div>
           </form>
         </div>
@@ -336,40 +343,53 @@ document.addEventListener("DOMContentLoaded", function () {
         const data = await res.json();
         document.getElementById("airPurifyForm").setAttribute("data-editing-id", id);
 
-        // 填入欄位略...
+        // 填入欄位
         document.getElementById("serial").value = data.serial || "";
         document.getElementById("year").value = data.year || "";
         document.getElementById("district").value = data.district || "";
         document.getElementById("type").value = data.type || "";
         document.getElementById("project_name").value = data.project_name || "";
         document.getElementById("maintain_unit").value = data.maintain_unit || "";
+        document.getElementById("adopt_unit").value = data.adopt_unit || "";
         document.getElementById("area").value = data.area || "";
-        document.getElementById("subsidy").value = data.subsidy || "";
-        const rawDate = data.approved_date;
-        let formattedDate = "";
+        document.getElementById("length").value = data.length || "";
+        document.getElementById("subsidy_source").value = data.subsidy_source || "";
+        const startDate = data.maintain_start_date;
+        const endDate = data.maintain_end_date;
+        let formattedDate_start = "";
+        let formattedDate_end = "";
 
-        if (rawDate) {
-          const dateObj = new Date(rawDate);
+        if (startDate) {
+          const dateObj = new Date(startDate);
           const yyyy = dateObj.getFullYear();
           const mm = String(dateObj.getMonth() + 1).padStart(2, '0'); // 月份從 0 開始
           const dd = String(dateObj.getDate()).padStart(2, '0');
-          formattedDate = `${yyyy}-${mm}-${dd}`;
+          formattedDate_start = `${yyyy}-${mm}-${dd}`;
         }
 
-        document.getElementById("approved_date").value = formattedDate;
+        if (endDate) {
+          const dateObj = new Date(endDate);
+          const yyyy = dateObj.getFullYear();
+          const mm = String(dateObj.getMonth() + 1).padStart(2, '0'); // 月份從 0 開始
+          const dd = String(dateObj.getDate()).padStart(2, '0');
+          formattedDate_end = `${yyyy}-${mm}-${dd}`;
+        }
+
+        document.getElementById("maintain_start_date").value = formattedDate_start;
+        document.getElementById("maintain_end_date").value = formattedDate_end;
         
 
         document.getElementById("gps").value = data.gps || "";
-        document.getElementById("subsidy_item").value = data.subsidy_item || "";
-        document.getElementById("co2_total").value = data.co2_total || "";
+        document.getElementById("annotation").value = data.annotation || "";
+        // document.getElementById("co2_total").value = data.co2_total || "";
 
-        document.getElementById("co2").value = data.co2 || "";
-        document.getElementById("tsp").value = data.tsp || "";
-        document.getElementById("so2").value = data.so2 || "";
-        document.getElementById("no2").value = data.no2 || "";
-        document.getElementById("co").value = data.co || "";
-        document.getElementById("ozone").value = data.ozone || "";
-        document.getElementById("pan").value = data.pan || "";
+        // document.getElementById("co2").value = data.co2 || "";
+        // document.getElementById("tsp").value = data.tsp || "";
+        // document.getElementById("so2").value = data.so2 || "";
+        // document.getElementById("no2").value = data.no2 || "";
+        // document.getElementById("co").value = data.co || "";
+        // document.getElementById("ozone").value = data.ozone || "";
+        // document.getElementById("pan").value = data.pan || "";
 
         imageFiles = [];
       if (Array.isArray(data.image_urls)) {
@@ -388,6 +408,7 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   });
 });
+
 
 
 
