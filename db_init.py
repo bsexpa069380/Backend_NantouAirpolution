@@ -112,14 +112,6 @@ def db_init():
             image_url TEXT
         );
 
-        CREATE TABLE IF NOT EXISTS announcement (
-            id SERIAL PRIMARY KEY,
-            title TEXT NOT NULL,
-            date DATE NOT NULL,
-            content TEXT NOT NULL,
-            image_url TEXT
-        );
-
         CREATE TABLE IF NOT EXISTS files (
             id SERIAL PRIMARY KEY,
             title TEXT NOT NULL,

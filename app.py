@@ -868,13 +868,19 @@ def create_tree_intro():
         data = request.form
 
         cursor.execute("""
-            INSERT INTO tree_intros (title, date, content, image_url)
-            VALUES (%s, %s, %s, %s)
+            INSERT INTO tree_intros (title, date, scientific_name ,plant_phenology,features,
+            natural_distribution, usage, image_url)
+            VALUES (%s, %s, %s, %s, %s,
+                    %s, %s, %s)
             RETURNING *;
         """, (
             data.get("title"),
             data.get("date"),
-            data.get("content"),
+            data.get("scientific_name"),
+            data.get("plant_phenology"),
+            data.get("features"),
+            data.get("natural_distribution"),
+            data.get("usage"),
             image_url
         ))
 
@@ -947,14 +953,22 @@ def update_tree_intro(id):
             UPDATE tree_intros
             SET title = %s,
                 date = %s,
-                content = %s,
+                scientific_name = %s,
+                plant_phenology = %s,
+                features = %s,
+                natural_distribution = %s,
+                usage, = %s,
                 image_url = COALESCE(%s, image_url)
             WHERE id = %s
             RETURNING *;
         """, (
             data.get("title"),
             data.get("date"),
-            data.get("content"),
+            data.get("scientific_name"),
+            data.get("plant_phenology"),
+            data.get("features"),
+            data.get("natural_distribution"),
+            data.get("usage"),
             image_url,  # new R2 url or None → keep old if None
             id
         ))
