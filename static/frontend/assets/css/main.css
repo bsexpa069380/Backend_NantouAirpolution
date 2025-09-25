@@ -148,7 +148,7 @@ h6 {
 }
 
 .header .logo img {
-  max-height: 55px;
+  max-height: 65px;
   margin-right: 8px;
 }
 
@@ -222,7 +222,7 @@ h6 {
   .navmenu a:focus {
     color: var(--nav-color);
     padding: 18px 15px;
-    font-size: 16px;
+    font-size: 20px;
     font-family: var(--nav-font);
     font-weight: 400;
     display: flex;
@@ -2002,9 +2002,8 @@ section,
 --------------------------------------------------------------*/
 .blog-details .article-hero {
   position: relative;
-  height: 70vh;
-  min-height: 600px;
-  margin: -60px -15px 4rem;
+  height: 50vh;
+  min-height: 500px;
   border-radius: 0 0 24px 24px;
   overflow: hidden;
 }
@@ -2022,7 +2021,7 @@ section,
   top: 0;
   left: 0;
   width: 100%;
-  height: 100%;
+  height: auto;
 }
 
 .blog-details .article-hero .hero-background .hero-bg-image {
@@ -2037,7 +2036,7 @@ section,
   left: 0;
   width: 100%;
   height: 100%;
-  background: linear-gradient(135deg, rgba(0, 0, 0, 0.7) 0%, rgba(0, 0, 0, 0.4) 100%);
+  background: linear-gradient(135deg, rgba(0, 0, 0, 0.2) 0%, rgba(0, 0, 0, 0.1) 10%);
 }
 
 .blog-details .article-hero .hero-content {
@@ -2544,8 +2543,9 @@ section,
 }
 
 .blog-details .article-body .main-content .content-block .split-content .monitoring-dashboard .vital-signs .vital-item .vital-label {
-  font-size: 0.9rem;
+  font-size: 1.2rem;
   color: color-mix(in srgb, var(--default-color), transparent 30%);
+  font-weight: 900;
 }
 
 .blog-details .article-body .main-content .content-block .split-content .monitoring-dashboard .vital-signs .vital-item .vital-value {
@@ -4338,22 +4338,22 @@ section,
 }
 
 .search-results-posts .post-img {
-  max-height: 240px;
+  max-height: 280px;
   margin: -30px -30px 15px -30px;
   overflow: hidden;
 }
 
 .search-results-posts .post-category {
-  font-size: 16px;
+  font-size: 14px;
   color: color-mix(in srgb, var(--default-color), transparent 40%);
   margin-bottom: 10px;
 }
 
 .search-results-posts .title {
-  font-size: 20px;
+  font-size: 25px;
   font-weight: 700;
   padding: 0;
-  margin: 0 0 20px 0;
+  margin: 0 0 0 0;
 }
 
 .search-results-posts .title a {
@@ -4735,3 +4735,47 @@ section,
   font-size: 14px;
 }
 
+.nav-pills .nav-link.active {
+  background-color: #08673f;
+  color: #fff;
+  border: none; /* 移除邊框 */
+}
+
+/* 奇數行白色 */
+.zebra tbody tr:nth-of-type(odd) > * {
+  --bs-table-accent-bg: #ffffff;
+}
+
+/* 偶數行淡綠 */
+.zebra tbody tr:nth-of-type(even) > * {
+  --bs-table-accent-bg: #e6f7e6;  /* 你要的淡綠色 */
+}
+
+.table {
+  --bs-table-hover-bg: #1385693c;
+}
+
+.table-primary {
+  --bs-table-color: #ffffff;
+  --bs-table-bg: #59ca97;
+  --bs-table-border-color: #ffffff;
+  --bs-table-striped-bg: #c5d7f2;
+  --bs-table-striped-color: #000;
+  --bs-table-active-bg: #bacbe6;
+  --bs-table-active-color: #000;
+  --bs-table-hover-bg: #6899e4;
+  --bs-table-hover-color: #000;
+  color: var(--bs-table-color);
+  border-color: var(--bs-table-border-color);
+}
+
+.clickable-row {
+  cursor: pointer;
+}
+
+.img-hover-zoom img {
+  transition: transform 0.4s ease;
+}
+.img-hover-zoom img:hover {
+  transform: scale(1.1);
+}

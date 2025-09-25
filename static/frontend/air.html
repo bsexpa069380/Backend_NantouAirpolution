@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta content="width=device-width, initial-scale=1.0" name="viewport">
+  <title>南投環保局空氣品質淨化區資訊網</title>
+  <meta name="description" content="">
+  <meta name="keywords" content="">
+
+  <!-- Favicons -->
+  <link href="assets/img/favicon.png" rel="icon">
+  <link href="assets/img/apple-touch-icon.png" rel="apple-touch-icon">
+
+  <!-- Fonts -->
+  <link href="https://fonts.googleapis.com" rel="preconnect">
+  <link href="https://fonts.gstatic.com" rel="preconnect" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&family=Montserrat:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&family=Raleway:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap" rel="stylesheet">
+
+  <!-- Vendor CSS Files -->
+  <link href="assets/vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet">
+  <link href="assets/vendor/bootstrap-icons/bootstrap-icons.css" rel="stylesheet">
+  <link href="assets/vendor/aos/aos.css" rel="stylesheet">
+  <link href="assets/vendor/swiper/swiper-bundle.min.css" rel="stylesheet">
+
+  <!-- Main CSS File -->
+  <link href="assets/css/main.css" rel="stylesheet">
+
+</head>
+<style>
+  .table tbody tr {
+    height: 60px;  /* 固定行高 */
+    vertical-align: middle;
+    text-align: center;
+  }
+</style>
+
+<body class="category-page">
+
+  <header id="header" class="header d-flex align-items-center position-relative">
+    <div class="container position-relative d-flex align-items-center justify-content-between">
+
+      <a href="index.html" class="logo d-flex align-items-center me-auto me-xl-0">
+        <!-- Uncomment the line below if you also wish to use an image logo -->
+        <!-- <img src="assets/img/logo.webp" alt=""> -->
+        <h1 class="sitename"><img src="assets/img/logo.png" alt="Blog Hero Image"></h1>
+      </a>
+
+      <nav id="navmenu" class="navmenu">
+        <ul>
+          <li class="dropdown"><a href="#"><span>基地介紹</span> <i class="bi bi-chevron-down toggle-dropdown"></i></a>
+            <ul>
+              <li><a href="about.html">空氣品值淨化</a></li>
+              <li><a href="category.html">綠美化</a></li>
+              <li><a href="blog-details.html">空氣綠牆</a></li>
+
+
+              <!-- <li class="dropdown"><a href="#"><span>基地介紹</span> <i class="bi bi-chevron-down toggle-dropdown"></i></a>
+                <ul>
+                  <li><a href="#">空品淨化區</a></li>
+                  <li><a href="#">綠美化</a></li>
+                  <li><a href="#">空氣綠牆</a></li>
+                </ul>
+              </li> -->
+            </ul>
+          </li>
+          <li><a href="about.html">最新成果</a></li>
+          <li><a href="index.html" >樹種介紹</a></li>
+          <li><a href="category.html">文件下載</a></li>
+          
+         
+        </ul>
+        <i class="mobile-nav-toggle d-xl-none bi bi-list"></i>
+      </nav>
+
+
+    </div>
+  </header>
+
+  <main class="main">
+
+    <!-- Page Title -->
+    <div class="page-title">
+      <div class="heading">
+        <div class="container">
+          <div class="row d-flex justify-content-center text-center">
+            <div class="col-lg-8">
+              <h1 class="heading-title">基地查詢</h1>
+              <p class="mb-0">淨化區建置進度、活動紀錄與環境改善亮點，透過影像與文字分享南投縣推動永續的努力。透過照片、影音與文字故事，呈現綠化成果、社區參與及政策推動的點滴。.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+      <nav class="breadcrumbs">
+        <div class="container">
+          <ol>
+            <li><a href="index.html">首頁</a></li>
+            <li class="current">基地介紹</li>
+          </ol>
+        </div>
+      </nav>
+    </div><!-- End Page Title -->
+     
+    <div class="container mt-4">
+      <div class="row">
+        <div class="col-12 col-md-3 mb-3">
+          <div class="form-floating">
+            <select class="form-select" id="air-year" aria-label="年度篩選">
+              <option selected>不分年度</option>
+              <option value="1">2025</option>
+              <option value="2">2024</option>
+              <option value="3">2023</option>
+            </select>
+            <label for="floatingSelect">年度篩選</label>
+          </div>
+        </div>
+        <div class="col-12 col-md-4 mb-3">
+          <div class="form-floating">
+            <select class="form-select" id="air-type" aria-label="類別篩選">
+              <option selected>不分類別</option>
+              <option value="1">空氣品質淨化</option>
+              <option value="2">綠美化</option>
+              <option value="3">空氣綠牆</option>
+            </select>
+            <label for="floatingSelect">類別篩選</label>
+          </div>
+        </div>
+        <div class="col-12 col-md-4 mb-3">
+          <div class="form-floating">
+            <select class="form-select" id="air-zone" aria-label="行政區">
+              <option selected>不分行政區</option>
+              <option value="1">信義鄉</option>
+              <option value="2">水里鄉</option>
+              <option value="3">竹山鎮</option>
+            </select>
+            <label for="floatingSelect">行政區篩選</label>
+          </div>
+        </div>
+        <div class="col-12 col-md-1 mb-3 d-flex justify-content-end">
+          <button class="btn btn-dark btn-lg" type="submit">查詢</button>
+        </div>
+
+      </div>
+    </div>
+
+    <div class="container my-4">
+      <div class="card shadow-sm rounded-3">
+        <!-- 手機可水平 + 垂直捲動 -->
+        <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+          <table class="table zebra table-hover align-middle mb-0 w-100 w-sm-100" style="min-width: 700px;">
+            <thead class="table-primary sticky-top text-center" style="height: 60px; vertical-align:middle;">
+              <tr>
+                <th scope="col">年度</th>
+                <th scope="col">行政區</th>
+                <th scope="col">類別</th>
+                <th scope="col">基地/計劃名稱	</th>
+                <th scope="col">維護單位</th>
+                <th scope="col">點選更多</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr class="clickable-row" data-href="#">
+                <td>114</td>
+                <td>信義鄉</td>
+                <td>空氣品質淨化</td>
+                <td>嘉興國小空品淨化區設置計畫</td>
+                <td>嘉興國民小學</td>
+                <td>詳細資料➜</td>
+              </tr>
+              <tr class="clickable-row" data-href="#">
+                <td>115</td>
+                <td>信義鄉</td>
+                <td>空氣品質淨化</td>
+                <td>嘉興國小空品淨化區設置計畫</td>
+                <td>嘉興國民小學</td>
+                <td>詳細資料➜</td>
+              </tr>
+              <tr class="clickable-row" data-href="#">
+                <td>115</td>
+                <td>信義鄉</td>
+                <td>空氣品質淨化</td>
+                <td>嘉興國小空品淨化區設置計畫</td>
+                <td>嘉興國民小學</td>
+                <td>詳細資料➜</td>
+              </tr>
+              <tr class="clickable-row" data-href="#">
+                <td>115</td>
+                <td>信義鄉</td>
+                <td>空氣品質淨化</td>
+                <td>嘉興國小空品淨化區設置計畫</td>
+                <td>嘉興國民小學</td>
+                <td>詳細資料➜</td>
+              </tr>
+              
+
+            </tbody>
+
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <section id="pagination-2" class="pagination-2 section">
+
+      <div class="container">
+        <div class="d-flex justify-content-center">
+          <ul>
+            <li><a href="#"><i class="bi bi-chevron-left"></i></a></li>
+            <li><a href="#">1</a></li>
+            <li><a href="#" class="active">2</a></li>
+            <li><a href="#">3</a></li>
+            <li><a href="#">4</a></li>
+            <li>...</li>
+            <li><a href="#">10</a></li>
+            <li><a href="#"><i class="bi bi-chevron-right"></i></a></li>
+          </ul>
+        </div>
+      </div>
+
+    </section><!-- /Pagination 2 Section -->
+    
+    
+
+  </main>
+
+  <footer id="footer" class="footer position-relative light-background">
+
+    <div class="container">
+      <div class="row gy-5">
+
+        <div class="col-lg-4">
+          <div class="footer-brand">
+            <a href="index.html" class="logo d-flex align-items-center mb-3">
+              <h4>南投縣政府環境保護局</h4>
+            </a>
+            <p class="tagline">上班(服務)時間：<br>上午 08:00-12:00；下午 13:30-17:30 <br>(週六、日及例假日休息)</p>
+
+            <div class="social-links mt-4">
+              <a href="#" aria-label="Facebook"><i class="bi bi-facebook"></i></a>
+              <a href="#" aria-label="Instagram"><i class="bi bi-instagram"></i></a>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-lg-6">
+          <div class="footer-links-grid">
+            <div class="row">
+              <div class="col-6 col-md-4">
+                <h5>首頁區塊</h5>
+                <ul class="list-unstyled">
+                  <li><a href="#">最新花絮</a></li>
+                  <li><a href="#">綠地現況</a></li>
+                  <li><a href="#">基地數量</a></li>
+                </ul>
+              </div>
+              <div class="col-6 col-md-4">
+                <h5>基地介紹</h5>
+                <ul class="list-unstyled">
+                  <li><a href="#">空氣淨化</a></li>
+                  <li><a href="#">空氣綠牆</a></li>
+                  <li><a href="#">綠美化</a></li>
+                </ul>
+              </div>
+              <div class="col-6 col-md-4">
+                <h5>其他頁面</h5>
+                <ul class="list-unstyled">
+                  <li><a href="#">樹種介紹</a></li>
+                  <li><a href="#">文件下載</a></li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-lg-2">
+          <div class="footer-cta">
+            <h5>聯絡我們</h5>
+            <p>TEL：(049)223-7530</p>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <div class="footer-bottom">
+      <div class="container">
+        <div class="row">
+          <div class="col-12">
+            <div class="footer-bottom-content">
+              <p class="mb-0">© <strong>南投縣政府環境保護局版權所有</strong>. All rights reserved.</p>
+              <div class="credits">
+                Designed by 艾可森數位學習有限公司</a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </footer>
+
+  <!-- Scroll Top -->
+  <a href="#" id="scroll-top" class="scroll-top d-flex align-items-center justify-content-center"><i class="bi bi-arrow-up-short"></i></a>
+
+  <!-- Preloader -->
+  <div id="preloader"></div>
+
+  <!-- Vendor JS Files -->
+  <script src="assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+  <script src="assets/vendor/php-email-form/validate.js"></script>
+  <script src="assets/vendor/aos/aos.js"></script>
+  <script src="assets/vendor/swiper/swiper-bundle.min.js"></script>
+  <script src="assets/vendor/purecounter/purecounter_vanilla.js"></script>
+
+  <!-- Main JS File -->
+  <script src="assets/js/main.js"></script>
+
+</body>
+
+</html>
+
+<script>
+  document.querySelectorAll(".clickable-row").forEach(row => {
+    row.addEventListener("click", () => {
+      window.location.href = row.dataset.href;
+    });
+  });
+</script>
