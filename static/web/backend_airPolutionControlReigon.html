@@ -18,10 +18,27 @@
         <h4 class="fw-bold">空氣淨化區後台列表</h4>
         <a href="admin_dashboard.html" class="btn btn-outline-dark btn-no-underline">回後台首頁</a>
     </div>
-
+<div class="row">
+  
+    <div class="col-md-6">
     <div class="mb-3 text-start">
         <button class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#addModal">新增項目</button>
     </div>
+    </div>
+
+    <div class="col-md-6">
+    <div class="form-check form-switch ms-2 " style="display: flex;justify-content: flex-end;">
+  
+  <label class="form-check-label" for="visibilityToggle">顯示空氣淨化區
+      <input class="form-check-input" type="checkbox" id="visibilityToggle"></label>
+  
+  </div>
+    </div>
+</div>
+
+    
+
+    
 
     <table class="table table-bordered text-center">
         <thead class="table-secondary">
@@ -58,8 +75,12 @@
           <form id="airPurifyForm">
             <div class="row">
               <div class="col-md-6">
-                <label class="form-label">圖片 (.jpg/.png)</label>
-                <input type="file" class="form-control mb-3" id="image" name="image">
+                <label class="form-label">上傳圖片（可多選）</label>
+<input type="file" class="form-control mb-3" id="imageInput" name="images" accept="image/*" multiple>
+
+<div id="imagePreviewContainer" class="d-flex flex-wrap gap-2 mb-3" style="min-height: 100px;">
+  <!-- 圖片預覽與拖曳排序容器 -->
+</div>
   
                 <label class="form-label">序號</label>
                 <input type="text" class="form-control mb-3" id="serial" name="serial">
@@ -122,6 +143,8 @@
             </div>
           </form>
         </div>
+        <div id="alert-container" class="position-fixed top-0 end-0 p-3" style="z-index: 1055;">
+</div>
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
           <button type="submit" class="btn btn-primary" form="airPurifyForm">確認發布</button>
@@ -144,12 +167,7 @@ async function loadData() {
     const tbody = document.querySelector("tbody");
     tbody.innerHTML = "";
 
-    if (!Array.isArray(data) || data.length === 0) {
-        const row = document.createElement("tr");
-        row.innerHTML = `<td colspan="3" class="text-center">尚無資料</td>`;
-        tbody.appendChild(row);
-        return;
-    }
+    
 
     data.forEach(item => {
         const row = document.createElement("tr");
@@ -181,80 +199,61 @@ document.getElementById("airPurifyForm").addEventListener("submit", async functi
   try {
     const res = await fetch(url, {
       method,
-      headers: {
-        Authorization: `Bearer ${token}`
-      },
+      headers: { Authorization: `Bearer ${token}` },
       body: formData
     });
 
     if (!res.ok) throw new Error(`${isEdit ? "更新" : "新增"}失敗`);
 
+    // ✅ parse returned data (make sure your backend returns JSON with id + project_name at least)
+    const item = await res.json();
+
     const modal = bootstrap.Modal.getInstance(document.getElementById("addModal"));
     modal.hide();
 
-    alert(`${isEdit ? "更新" : "新增"}成功`);
-    location.reload(); // 或改為只更新該列
+    if (isEdit) {
+      // ✅ update existing row
+      const row = document.querySelector(`tr[data-id="${id}"]`);
+      if (row) {
+        row.querySelector("td:first-child").textContent = item.project_name;
+      }
+    } else {
+      const emptyRow = document.querySelector("tbody tr td[colspan='3']");
+  if (emptyRow) {
+    emptyRow.parentElement.remove(); // remove the <tr>
+  }
+
+  // ✅ create new row
+  const tbody = document.querySelector("tbody");
+  const newRow = document.createElement("tr");
+  newRow.setAttribute("data-id", item.id);
+  newRow.innerHTML = `
+    <td>${item.project_name}</td>
+    <td><button class="btn btn-sm btn-warning edit-btn">編輯</button></td>
+    <td><button class="btn btn-sm btn-danger delete-btn">刪除</button></td>
+  `;
+  tbody.appendChild(newRow);
+    }
+
+    showBootstrapToast(`${isEdit ? "更新" : "新增"}成功`, "success");
+    form.removeAttribute("data-editing-id");
+    form.reset();
   } catch (err) {
-    alert(err.message);
+    showBootstrapToast(`${isEdit ? "更新" : "新增"}失敗: ${err.message}`, "danger");
+    console.error(err);
   }
 });
 
-// document.getElementById("airPurifyForm").addEventListener("submit", async function (e) {
-//     e.preventDefault();
-//     const formData = new FormData(this);
-
-//     try {
-//         const res = await fetch(API_BASE, {
-//             method: "POST",
-//             headers: {
-//     "Authorization": `Bearer ${token}`  // <<<<<< 這是關鍵
-//   },
-//             body: formData
-//         });
-
-//         const result = await res.json();
-//         if (res.ok) {
-//             alert("新增成功！");
-//             const modal = bootstrap.Modal.getInstance(document.getElementById("addModal"));
-//             modal.hide();
-//             this.reset();
-//             loadData();
-//         } else {
-//             alert(result.message || "新增失敗");
-//         }
-//     } catch (err) {
-//         alert("伺服器錯誤，請稍後再試");
-//         console.error(err);
-//     }
-// });
-
-//Delete data 
-// document.addEventListener("DOMContentLoaded", function () {
-//   document.querySelectorAll(".delete-btn").forEach(button => {
-//     button.addEventListener("click", async function () {
-//       const row = this.closest("tr");
-//       const id = row.getAttribute("data-id");
-
-//       const token = localStorage.getItem("token");
-//       const res = await fetch(`/api/purification_zones/${id}`, {
-//         method: "DELETE",
-//         headers: {
-//           Authorization: `Bearer ${token}`
-//         }
-//       });
-
-//       if (res.ok) {
-//         row.remove();
-//         alert("已成功刪除");
-//       } else {
-//         const err = await res.json();
-//         alert("刪除失敗: " + err.error);
-//       }
-//     });
-//   });
-// });
+// 刪除按鈕與編輯按鈕事件委派
 document.addEventListener("DOMContentLoaded", function () {
   const tbody = document.querySelector("tbody");
+  const form = document.getElementById("airPurifyForm");
+  form.reset();
+  form.removeAttribute("data-editing-id");
+
+  // 清除圖片預覽與暫存圖片檔案
+  previewContainer.innerHTML = "";
+  imageFiles = [];
 
   // Delete delegation
   tbody.addEventListener("click", async function (e) {
@@ -272,10 +271,11 @@ document.addEventListener("DOMContentLoaded", function () {
 
       if (res.ok) {
         row.remove();
-        alert("已成功刪除");
+        showBootstrapToast(`刪除成功`, "success");
       } else {
         const err = await res.json();
-        alert("刪除失敗: " + err.error);
+        showBootstrapToast("刪除失敗: ", "danger");
+        console.error(err);
       }
     }
   });
@@ -343,13 +343,118 @@ document.addEventListener("DOMContentLoaded", function () {
   });
 });
 
+const imageInput = document.getElementById("imageInput");
+  const previewContainer = document.getElementById("imagePreviewContainer");
 
+  let imageFiles = []; // 保存圖片檔案的陣列
 
+  imageInput.addEventListener("change", function () {
+  const files = Array.from(this.files);
+  files.forEach(file => {
+    if (!file.type.startsWith("image/")) return;
+    imageFiles.push(file);
+  });
 
+  renderPreviewCards(); // 使用新的渲染函數
+  imageInput.value = "";
+});
+
+function renderPreviewCards() {
+  previewContainer.innerHTML = "";
+  imageFiles.forEach((file, index) => {
+    const reader = new FileReader();
+    reader.onload = function (e) {
+      const card = document.createElement("div");
+      card.className = "position-relative border rounded p-1";
+      card.style.width = "100px";
+      card.style.height = "100px";
+      card.style.overflow = "hidden";
+      card.draggable = true;
+
+      card.innerHTML = `
+        <img src="${e.target.result}" class="img-fluid rounded" style="max-height: 100%; object-fit: cover;">
+        <button type="button" class="btn btn-sm btn-danger position-absolute top-0 end-0 m-1 px-1 py-0 delete-btn" style="z-index: 10;">×</button>
+      `;
+
+      // 刪除事件
+      card.querySelector(".delete-btn").addEventListener("click", function () {
+        imageFiles.splice(index, 1);
+        renderPreviewCards();
+      });
+
+      // 拖曳事件
+      card.addEventListener("dragstart", function (e) {
+        e.dataTransfer.setData("text/plain", index);
+      });
+
+      card.addEventListener("dragover", function (e) {
+        e.preventDefault();
+        card.classList.add("border-primary");
+      });
+
+      card.addEventListener("dragleave", function () {
+        card.classList.remove("border-primary");
+      });
+
+      card.addEventListener("drop", function (e) {
+        e.preventDefault();
+        card.classList.remove("border-primary");
+        const fromIndex = e.dataTransfer.getData("text/plain");
+        const toIndex = index;
+
+        const movedFile = imageFiles.splice(fromIndex, 1)[0];
+        imageFiles.splice(toIndex, 0, movedFile);
+        renderPreviewCards(); // 再次重渲染，重新綁定事件
+      });
+
+      previewContainer.appendChild(card);
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+document.getElementById("addModal").addEventListener("hidden.bs.modal", function () {
+  const form = document.getElementById("airPurifyForm");
+  form.reset();
+  form.removeAttribute("data-editing-id");
+
+  // 如果有圖片預覽也清掉
+  if (typeof previewContainer !== "undefined") {
+    previewContainer.innerHTML = "";
+  }
+  if (typeof imageFiles !== "undefined") {
+    imageFiles = [];
+  }
+});
+function showBootstrapToast(message, type = 'success') {
+  const toastId = `toast-${Date.now()}`;
+  const toastHTML = `
+    <div id="${toastId}" class="toast align-items-center text-white bg-${type} border-0" role="alert" aria-live="assertive" aria-atomic="true">
+      <div class="d-flex">
+        <div class="toast-body">
+          ${message}
+        </div>
+        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+      </div>
+    </div>
+  `;
+
+  const container = document.getElementById("toast-container");
+  container.insertAdjacentHTML("beforeend", toastHTML);
+
+  const toastEl = document.getElementById(toastId);
+  const bsToast = new bootstrap.Toast(toastEl, { delay: 3000 });
+  bsToast.show();
+
+  // 自動移除 DOM（可選）
+  toastEl.addEventListener("hidden.bs.toast", () => {
+    toastEl.remove();
+  });
+}
 // 頁面載入時取得資料
 document.addEventListener("DOMContentLoaded", loadData);
 </script>
 
-
+<div id="toast-container" class="position-fixed top-0 end-0 p-3" style="z-index: 1100;"></div>
 </body>
 </html>

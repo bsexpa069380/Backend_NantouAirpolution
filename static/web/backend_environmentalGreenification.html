@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <title>綠美化後台</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .btn-no-underline {
+            text-decoration: none;
+        }
+        .action-btn {
+            margin-right: 10px;
+        }
+    </style>
+</head>
+<body class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h4 class="fw-bold">綠美化後台列表</h4>
+        <a href="admin_dashboard.html" class="btn btn-outline-dark btn-no-underline">回後台首頁</a>
+    </div>
+
+    <div class="mb-3 text-start">
+        <button class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#addModal">新增項目</button>
+    </div>
+
+    <table class="table table-bordered text-center">
+        <thead class="table-secondary">
+            <tr>
+                <th>基地/計劃名稱</th>
+                <th>編輯</th>
+                <th>刪除</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- <tr>
+                <td>範例計劃一</td>
+                <td><button class="btn btn-sm btn-warning action-btn">編輯</button></td>
+                <td><button class="btn btn-sm btn-danger">刪除</button></td>
+            </tr>
+            <tr>
+                <td>範例計劃二</td>
+                <td><button class="btn btn-sm btn-warning action-btn">編輯</button></td>
+                <td><button class="btn btn-sm btn-danger">刪除</button></td>
+            </tr> -->
+        </tbody>
+    </table>
+
+    <!-- Modal -->
+    <!-- Modal -->
+<div class="modal fade" id="addModal" tabindex="-1" aria-labelledby="addModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="addModalLabel">新增綠美化項目</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="關閉"></button>
+        </div>
+        <div class="modal-body">
+          <form id="airPurifyForm">
+            <div class="row">
+              <div class="col-md-6">
+                <label class="form-label">上傳圖片（可多選）</label>
+<input type="file" class="form-control mb-3" id="imageInput" name="images" accept="image/*" multiple>
+
+<div id="imagePreviewContainer" class="d-flex flex-wrap gap-2 mb-3" style="min-height: 100px;">
+  <!-- 圖片預覽與拖曳排序容器 -->
+</div>
+  
+                <label class="form-label">序號</label>
+                <input type="text" class="form-control mb-3" id="serial" name="serial">
+  
+                <label class="form-label">設置年度</label>
+                <input type="text" class="form-control mb-3" id="year" name="year">
+  
+                <label class="form-label">行政區</label>
+                <input type="text" class="form-control mb-3" id="district" name="district">
+  
+                <label class="form-label">類別</label>
+                <input type="text" class="form-control mb-3" id="type" name="type">
+  
+                <label class="form-label">基地/計劃名稱</label>
+                <input type="text" class="form-control mb-3" id="project_name" name="project_name">
+  
+                <label class="form-label">維護單位</label>
+                <input type="text" class="form-control mb-3" id="maintain_unit" name="maintain_unit">
+  
+                <label class="form-label">基地面積 (平方公尺)</label>
+                <input type="text" class="form-control mb-3" id="area" name="area">
+  
+                <label class="form-label">補助金額 (元)</label>
+                <input type="text" class="form-control mb-3" id="subsidy" name="subsidy">
+  
+                <label class="form-label">核定日期</label>
+                <input type="date" class="form-control mb-3" id="approved_date" name="approved_date">
+  
+                <label class="form-label">GPS 座標</label>
+                <input type="text" class="form-control mb-3" id="gps" name="gps">
+  
+                <label class="form-label">補助項目</label>
+                <input type="text" class="form-control mb-3" id="subsidy_item" name="subsidy_item">
+  
+                <label class="form-label">碳匯資料 CO2 總量</label>
+                <input type="text" class="form-control mb-3" id="co2_total" name="co2_total">
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">二氧化碳 CO2</label>
+                <input type="text" class="form-control mb-3" id="co2" name="co2">
+  
+                <label class="form-label">粒狀污染物 TSP</label>
+                <input type="text" class="form-control mb-3" id="tsp" name="tsp">
+  
+                <label class="form-label">二氧化硫 SO2</label>
+                <input type="text" class="form-control mb-3" id="so2" name="so2">
+  
+                <label class="form-label">二氧化氮 NO2</label>
+                <input type="text" class="form-control mb-3" id="no2" name="no2">
+  
+                <label class="form-label">一氧化碳 CO</label>
+                <input type="text" class="form-control mb-3" id="co" name="co">
+  
+                <label class="form-label">臭氧</label>
+                <input type="text" class="form-control mb-3" id="ozone" name="ozone">
+  
+                <label class="form-label">過氧硝酸乙醯酯 PAN</label>
+                <input type="text" class="form-control mb-3" id="pan" name="pan">
+              </div>
+            </div>
+          </form>
+        </div>
+        <div id="alert-container" class="position-fixed top-0 end-0 p-3" style="z-index: 1055;">
+</div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+          <button type="submit" class="btn btn-primary" form="airPurifyForm">確認發布</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+// 儲存 API base URL
+const API_BASE = "/api/greenifications";
+
+// 渲染表格資料
+async function loadData() {
+    const res = await fetch(API_BASE);
+    const data = await res.json();
+    const tbody = document.querySelector("tbody");
+    tbody.innerHTML = "";
+
+    
+
+    data.forEach(item => {
+        const row = document.createElement("tr");
+        row.setAttribute("data-id", item.id);  // ✅ 加上這一行
+
+        row.innerHTML = `
+            <td>${item.project_name}</td>
+            <td><button class="btn btn-sm btn-warning edit-btn">編輯</button></td>
+            <td><button class="btn btn-sm btn-danger delete-btn">刪除</button></td>
+        `;
+        tbody.appendChild(row);
+    });
+}
+const token = localStorage.getItem('token');
+// 表單提交處理
+document.getElementById("airPurifyForm").addEventListener("submit", async function (e) {
+  e.preventDefault();
+
+  const form = e.target;
+  const id = form.getAttribute("data-editing-id"); // 如果是編輯，這邊會有 ID
+  const token = localStorage.getItem("token");
+
+  const formData = new FormData(form);
+
+  const isEdit = !!id;
+  const method = isEdit ? "PUT" : "POST";
+  const url = isEdit ? `/api/greenifications/${id}` : "/api/greenifications";
+
+  try {
+    const res = await fetch(url, {
+      method,
+      headers: { Authorization: `Bearer ${token}` },
+      body: formData
+    });
+
+    if (!res.ok) throw new Error(`${isEdit ? "更新" : "新增"}失敗`);
+
+    // ✅ parse returned data (make sure your backend returns JSON with id + project_name at least)
+    const item = await res.json();
+
+    const modal = bootstrap.Modal.getInstance(document.getElementById("addModal"));
+    modal.hide();
+
+    if (isEdit) {
+      // ✅ update existing row
+      const row = document.querySelector(`tr[data-id="${id}"]`);
+      if (row) {
+        row.querySelector("td:first-child").textContent = item.project_name;
+      }
+    } else {
+      const emptyRow = document.querySelector("tbody tr td[colspan='3']");
+  if (emptyRow) {
+    emptyRow.parentElement.remove(); // remove the <tr>
+  }
+
+  // ✅ create new row
+  const tbody = document.querySelector("tbody");
+  const newRow = document.createElement("tr");
+  newRow.setAttribute("data-id", item.id);
+  newRow.innerHTML = `
+    <td>${item.project_name}</td>
+    <td><button class="btn btn-sm btn-warning edit-btn">編輯</button></td>
+    <td><button class="btn btn-sm btn-danger delete-btn">刪除</button></td>
+  `;
+  tbody.appendChild(newRow);
+
+    showBootstrapToast(`${isEdit ? "更新" : "新增"}成功`, "success");
+    console.log("AFTER TOAST");
+    form.removeAttribute("data-editing-id"); // reset mode back to create
+    form.reset();
+  } catch (err) {
+    showBootstrapToast(`${isEdit ? "更新" : "新增"}失敗: ${err.message}`, "danger");
+    console.error(err);
+  }
+  
+});
+
+
+document.addEventListener("DOMContentLoaded", function () {
+  const tbody = document.querySelector("tbody");
+  const form = document.getElementById("airPurifyForm");
+  form.reset();
+  form.removeAttribute("data-editing-id");
+
+  // 清除圖片預覽與暫存圖片檔案
+  previewContainer.innerHTML = "";
+  imageFiles = [];
+
+  // Delete delegation
+  tbody.addEventListener("click", async function (e) {
+    if (e.target.classList.contains("delete-btn")) {
+      const row = e.target.closest("tr");
+      const id = row.getAttribute("data-id");
+
+      const token = localStorage.getItem("token");
+      const res = await fetch(`/api/greenifications/${id}`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+
+      if (res.ok) {
+        row.remove();
+        showBootstrapToast(`刪除成功`, "success");
+      } else {
+        const err = await res.json();
+        showBootstrapToast("刪除失敗: " , "danger");
+      }
+    }
+  });
+
+  // Edit delegation
+  tbody.addEventListener("click", async function (e) {
+    if (e.target.classList.contains("edit-btn")) {
+      const row = e.target.closest("tr");
+      const id = row.getAttribute("data-id");
+      const token = localStorage.getItem("token");
+
+      try {
+        const res = await fetch(`/api/greenifications/${id}`, {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        });
+
+        if (!res.ok) throw new Error("取得資料失敗");
+
+        const data = await res.json();
+        document.getElementById("airPurifyForm").setAttribute("data-editing-id", id);
+
+        // 填入欄位略...
+        document.getElementById("serial").value = data.serial || "";
+        document.getElementById("year").value = data.year || "";
+        document.getElementById("district").value = data.district || "";
+        document.getElementById("type").value = data.type || "";
+        document.getElementById("project_name").value = data.project_name || "";
+        document.getElementById("maintain_unit").value = data.maintain_unit || "";
+        document.getElementById("area").value = data.area || "";
+        document.getElementById("subsidy").value = data.subsidy || "";
+        const rawDate = data.approved_date;
+        let formattedDate = "";
+
+        if (rawDate) {
+          const dateObj = new Date(rawDate);
+          const yyyy = dateObj.getFullYear();
+          const mm = String(dateObj.getMonth() + 1).padStart(2, '0'); // 月份從 0 開始
+          const dd = String(dateObj.getDate()).padStart(2, '0');
+          formattedDate = `${yyyy}-${mm}-${dd}`;
+        }
+
+        document.getElementById("approved_date").value = formattedDate;
+        
+
+        document.getElementById("gps").value = data.gps || "";
+        document.getElementById("subsidy_item").value = data.subsidy_item || "";
+        document.getElementById("co2_total").value = data.co2_total || "";
+
+        document.getElementById("co2").value = data.co2 || "";
+        document.getElementById("tsp").value = data.tsp || "";
+        document.getElementById("so2").value = data.so2 || "";
+        document.getElementById("no2").value = data.no2 || "";
+        document.getElementById("co").value = data.co || "";
+        document.getElementById("ozone").value = data.ozone || "";
+        document.getElementById("pan").value = data.pan || "";
+        const editModal = new bootstrap.Modal(document.getElementById("addModal"));
+        editModal.show();
+
+      } catch (err) {
+        showBootstrapToast(err.message, "danger");
+      }
+    }
+  });
+});
+
+const imageInput = document.getElementById("imageInput");
+  const previewContainer = document.getElementById("imagePreviewContainer");
+
+  let imageFiles = []; // 保存圖片檔案的陣列
+
+  imageInput.addEventListener("change", function () {
+  const files = Array.from(this.files);
+  files.forEach(file => {
+    if (!file.type.startsWith("image/")) return;
+    imageFiles.push(file);
+  });
+
+  renderPreviewCards(); // 使用新的渲染函數
+  imageInput.value = "";
+});
+
+function renderPreviewCards() {
+  previewContainer.innerHTML = "";
+  imageFiles.forEach((file, index) => {
+    const reader = new FileReader();
+    reader.onload = function (e) {
+      const card = document.createElement("div");
+      card.className = "position-relative border rounded p-1";
+      card.style.width = "100px";
+      card.style.height = "100px";
+      card.style.overflow = "hidden";
+      card.draggable = true;
+
+      card.innerHTML = `
+        <img src="${e.target.result}" class="img-fluid rounded" style="max-height: 100%; object-fit: cover;">
+        <button type="button" class="btn btn-sm btn-danger position-absolute top-0 end-0 m-1 px-1 py-0 delete-btn" style="z-index: 10;">×</button>
+      `;
+
+      // 刪除事件
+      card.querySelector(".delete-btn").addEventListener("click", function () {
+        imageFiles.splice(index, 1);
+        renderPreviewCards();
+      });
+
+      // 拖曳事件
+      card.addEventListener("dragstart", function (e) {
+        e.dataTransfer.setData("text/plain", index);
+      });
+
+      card.addEventListener("dragover", function (e) {
+        e.preventDefault();
+        card.classList.add("border-primary");
+      });
+
+      card.addEventListener("dragleave", function () {
+        card.classList.remove("border-primary");
+      });
+
+      card.addEventListener("drop", function (e) {
+        e.preventDefault();
+        card.classList.remove("border-primary");
+        const fromIndex = e.dataTransfer.getData("text/plain");
+        const toIndex = index;
+
+        const movedFile = imageFiles.splice(fromIndex, 1)[0];
+        imageFiles.splice(toIndex, 0, movedFile);
+        renderPreviewCards(); // 再次重渲染，重新綁定事件
+      });
+
+      previewContainer.appendChild(card);
+    };
+    reader.readAsDataURL(file);
+  });
+}
+document.getElementById("addModal").addEventListener("hidden.bs.modal", function () {
+  const form = document.getElementById("airPurifyForm");
+  form.reset();
+  form.removeAttribute("data-editing-id");
+
+  // 如果有圖片預覽也清掉
+  if (typeof previewContainer !== "undefined") {
+    previewContainer.innerHTML = "";
+  }
+  if (typeof imageFiles !== "undefined") {
+    imageFiles = [];
+  }
+});
+function showBootstrapToast(message, type = 'success') {
+  const toastId = `toast-${Date.now()}`;
+  const toastHTML = `
+    <div id="${toastId}" class="toast align-items-center text-white bg-${type} border-0" role="alert" aria-live="assertive" aria-atomic="true">
+      <div class="d-flex">
+        <div class="toast-body">
+          ${message}
+        </div>
+        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+      </div>
+    </div>
+  `;
+
+  const container = document.getElementById("toast-container");
+  container.insertAdjacentHTML("beforeend", toastHTML);
+
+  const toastEl = document.getElementById(toastId);
+  const bsToast = new bootstrap.Toast(toastEl, { delay: 3000 });
+  bsToast.show();
+
+  // 自動移除 DOM（可選）
+  toastEl.addEventListener("hidden.bs.toast", () => {
+    toastEl.remove();
+  });
+}
+// 頁面載入時取得資料
+document.addEventListener("DOMContentLoaded", loadData);
+</script>
+<div id="toast-container" class="position-fixed top-0 end-0 p-3" style="z-index: 1100;"></div>
+</body>
+</html>
