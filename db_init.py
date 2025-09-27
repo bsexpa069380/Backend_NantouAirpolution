@@ -1,8 +1,36 @@
 import psycopg2
 from psycopg2.extras import RealDictCursor
 import os
+import socket
+from urllib.parse import urlparse
 def get_db_connection():
-    return psycopg2.connect(dsn=os.getenv("DATABASE_URL"))
+    dsn = os.getenv("DATABASE_URL")
+    if not dsn:
+        print("❌ DATABASE_URL not set")
+        return None
+
+    try:
+        # Parse hostname
+        parsed = urlparse(dsn)
+        hostname = parsed.hostname
+
+        # Force IPv4 lookup
+        ipv4_addr = socket.getaddrinfo(hostname, None, socket.AF_INET)[0][4][0]
+
+        # Append hostaddr safely
+        connector_dsn = dsn
+        if "hostaddr" not in connector_dsn:
+            if "?" in connector_dsn:
+                connector_dsn += f"&hostaddr={ipv4_addr}"
+            else:
+                connector_dsn += f"?hostaddr={ipv4_addr}"
+
+        conn = psycopg2.connect(connector_dsn)
+        return conn
+
+    except Exception as e:
+        print("❌ Database connection failed:", e)
+        return None
 
 
 def db_reset():
@@ -15,12 +43,21 @@ def db_reset():
         cursor.execute("CREATE SCHEMA public;")
         conn.commit()
     except Exception as e:
+        if conn:
+            conn.rollback()
         print("Database reset error:", e)
     finally:
-        print("delete db")
-        cursor.close()
-        conn.close()
-
+       print("delete db")
+       if cursor is not None:
+            try:
+                cursor.close()
+            except Exception as e:
+                print("cursor.close() error:", e) 
+    if conn is not None:
+            try:
+                conn.close()
+            except Exception as e:
+                print("conn.close() error:", e)
 def db_init():
     
     conn = get_db_connection()
