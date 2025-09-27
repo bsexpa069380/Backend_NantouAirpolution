@@ -1,8 +1,36 @@
 import psycopg2
 from psycopg2.extras import RealDictCursor
 import os
+import socket
+from urllib.parse import urlparse
 def get_db_connection():
-    return psycopg2.connect(dsn=os.getenv("DATABASE_URL"))
+    dsn = os.getenv("DATABASE_URL")
+    if not dsn:
+        print("❌ DATABASE_URL not set")
+        return None
+
+    try:
+        # Parse hostname
+        parsed = urlparse(dsn)
+        hostname = parsed.hostname
+
+        # Force IPv4 lookup
+        ipv4_addr = socket.getaddrinfo(hostname, None, socket.AF_INET)[0][4][0]
+
+        # Append hostaddr safely
+        connector_dsn = dsn
+        if "hostaddr" not in connector_dsn:
+            if "?" in connector_dsn:
+                connector_dsn += f"&hostaddr={ipv4_addr}"
+            else:
+                connector_dsn += f"?hostaddr={ipv4_addr}"
+
+        conn = psycopg2.connect(connector_dsn)
+        return conn
+
+    except Exception as e:
+        print("❌ Database connection failed:", e)
+        return None
 
 
 def db_reset():
@@ -15,12 +43,21 @@ def db_reset():
         cursor.execute("CREATE SCHEMA public;")
         conn.commit()
     except Exception as e:
+        if conn:
+            conn.rollback()
         print("Database reset error:", e)
     finally:
-        print("delete db")
-        cursor.close()
-        conn.close()
-
+       print("delete db")
+       if cursor is not None:
+            try:
+                cursor.close()
+            except Exception as e:
+                print("cursor.close() error:", e) 
+    if conn is not None:
+            try:
+                conn.close()
+            except Exception as e:
+                print("conn.close() error:", e)
 def db_init():
     
     conn = get_db_connection()
@@ -35,96 +72,76 @@ def db_init():
 
         CREATE TABLE IF NOT EXISTS purification_zones (
             id SERIAL PRIMARY KEY,
-            image_url TEXT,
+            image_urls JSONB,
             serial TEXT NOT NULL,
             year TEXT NOT NULL,
             district TEXT NOT NULL,
             type TEXT NOT NULL,
             project_name TEXT NOT NULL,
             maintain_unit TEXT NOT NULL,
+            adopt_unit TEXT NOT NULL,
             area FLOAT,
-            subsidy TEXT,
-            approved_date DATE,
+            length FLOAT,
+            subsidy_source TEXT,
+            maintain_start_date DATE,
+            maintain_end_date DATE,
             gps TEXT,
-            subsidy_item TEXT,
-            co2_total TEXT,
-            co2 TEXT,
-            tsp TEXT,
-            so2 TEXT,
-            no2 TEXT,
-            co TEXT,
-            ozone TEXT,
-            pan TEXT,
+            annotation TEXT, 
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
 
-        CREATE TABLE IF NOT EXISTS green_wall (
+        CREATE TABLE IF NOT EXISTS green_walls (
             id SERIAL PRIMARY KEY,
-            image_url TEXT,
+            image_urls JSONB,
             serial TEXT NOT NULL,
             year TEXT NOT NULL,
             district TEXT NOT NULL,
             type TEXT NOT NULL,
             project_name TEXT NOT NULL,
             maintain_unit TEXT NOT NULL,
+            adopt_unit TEXT NOT NULL,
             area FLOAT,
-            subsidy TEXT,
-            approved_date DATE,
+            length FLOAT,
+            subsidy_source TEXT,
+            maintain_start_date DATE,
+            maintain_end_date DATE,
             gps TEXT,
-            subsidy_item TEXT,
-            co2_total TEXT,
-            co2 TEXT,
-            tsp TEXT,
-            so2 TEXT,
-            no2 TEXT,
-            co TEXT,
-            ozone TEXT,
-            pan TEXT,
+            annotation TEXT, 
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
 
-        CREATE TABLE IF NOT EXISTS greenification (
+        CREATE TABLE IF NOT EXISTS greenifications (
             id SERIAL PRIMARY KEY,
-            image_url TEXT,
+            image_urls JSONB,
             serial TEXT NOT NULL,
             year TEXT NOT NULL,
             district TEXT NOT NULL,
             type TEXT NOT NULL,
             project_name TEXT NOT NULL,
             maintain_unit TEXT NOT NULL,
+            adopt_unit TEXT NOT NULL,
             area FLOAT,
-            subsidy TEXT,
-            approved_date DATE,
+            length FLOAT,
+            subsidy_source TEXT,
+            maintain_start_date DATE,
+            maintain_end_date DATE,
             gps TEXT,
-            subsidy_item TEXT,
-            co2_total TEXT,
-            co2 TEXT,
-            tsp TEXT,
-            so2 TEXT,
-            no2 TEXT,
-            co TEXT,
-            ozone TEXT,
-            pan TEXT,
+            annotation TEXT, 
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
 
         CREATE TABLE IF NOT EXISTS tree_intros (
             id SERIAL PRIMARY KEY,
-            title TEXT NOT NULL,
-            date DATE NOT NULL,
-            content TEXT NOT NULL,
+            title TEXT NOT NULL,     
+            scientific_name TEXT NOT NULL,
+            plant_phenology TEXT NOT NULL,
+            features TEXT NOT NULL,
+            natural_distribution TEXT, 
+            usage TEXT, 
             image_url TEXT
         );
 
         CREATE TABLE IF NOT EXISTS result (
-            id SERIAL PRIMARY KEY,
-            title TEXT NOT NULL,
-            date DATE NOT NULL,
-            content TEXT NOT NULL,
-            image_url TEXT
-        );
-
-        CREATE TABLE IF NOT EXISTS announcement (
             id SERIAL PRIMARY KEY,
             title TEXT NOT NULL,
             date DATE NOT NULL,
@@ -137,7 +154,7 @@ def db_init():
             title TEXT NOT NULL,
             date DATE NOT NULL,
             note TEXT NOT NULL,
-            file TEXT
+            file_url TEXT
         );
 
         CREATE TABLE IF NOT EXISTS settings (

@@ -87,8 +87,11 @@
   
                 <label class="form-label">設置年度</label>
                 <input type="text" class="form-control mb-3" id="year" name="year">
+
+                <label class="form-label">設置經費來源</label>
+                <input type="text" class="form-control mb-3" id="subsidy_source" name="subsidy_source">
   
-                <label class="form-label">行政區</label>
+                <label class="form-label">鄉鎮別</label>
                 <input type="text" class="form-control mb-3" id="district" name="district">
   
                 <label class="form-label">類別</label>
@@ -102,23 +105,29 @@
   
                 <label class="form-label">基地面積 (平方公尺)</label>
                 <input type="text" class="form-control mb-3" id="area" name="area">
-  
-                <label class="form-label">補助金額 (元)</label>
-                <input type="text" class="form-control mb-3" id="subsidy" name="subsidy">
-  
-                <label class="form-label">核定日期</label>
-                <input type="date" class="form-control mb-3" id="approved_date" name="approved_date">
+
+                <label class="form-label">基地長度 (公尺)</label>
+                <input type="text" class="form-control mb-3" id="length" name="length">
+
+                <label class="form-label">認養單位</label>
+                <input type="text" class="form-control mb-3" id="adopt_unit" name="adopt_unit">
+
+                <label class="form-label">認養開始日期</label>
+                <input type="date" class="form-control mb-3" id="maintain_start_date" name="maintain_start_date">
+
+                <label class="form-label">認養結束日期</label>
+                <input type="date" class="form-control mb-3" id="maintain_end_date" name="maintain_end_date">
   
                 <label class="form-label">GPS 座標</label>
                 <input type="text" class="form-control mb-3" id="gps" name="gps">
   
-                <label class="form-label">補助項目</label>
-                <input type="text" class="form-control mb-3" id="subsidy_item" name="subsidy_item">
+                <label class="form-label">說明</label>
+                <input type="text" class="form-control mb-3" id="annotation" name="annotation">
   
-                <label class="form-label">碳匯資料 CO2 總量</label>
-                <input type="text" class="form-control mb-3" id="co2_total" name="co2_total">
+                <!-- <label class="form-label">碳匯資料 CO2 總量</label>
+                <input type="text" class="form-control mb-3" id="co2_total" name="co2_total"> -->
               </div>
-              <div class="col-md-6">
+              <!-- <div class="col-md-6">
                 <label class="form-label">二氧化碳 CO2</label>
                 <input type="text" class="form-control mb-3" id="co2" name="co2">
   
@@ -139,7 +148,7 @@
   
                 <label class="form-label">過氧硝酸乙醯酯 PAN</label>
                 <input type="text" class="form-control mb-3" id="pan" name="pan">
-              </div>
+              </div> -->
             </div>
           </form>
         </div>
@@ -183,14 +192,69 @@ async function loadData() {
 }
 const token = localStorage.getItem('token');
 // 表單提交處理
+const imageInput = document.getElementById("imageInput");
+const previewContainer = document.getElementById("imagePreviewContainer");
+let imageFiles = []; // 保存圖片檔案的陣列
+
+// ---- Preview Handling ----
+imageInput.addEventListener("change", function () {
+  const files = Array.from(this.files);
+  files.forEach(file => {
+    if (!file.type.startsWith("image/")) return;
+    imageFiles.push(file);
+  });
+
+  renderPreviewCards();
+  // ✅ DO NOT clear value here; we just don't rely on input afterwards
+  imageInput.value = "";
+});
+
+function renderPreviewCards() {
+  previewContainer.innerHTML = "";
+  imageFiles.forEach((file, index) => {
+    const card = document.createElement("div");
+    card.classList.add("card", "p-2", "m-1");
+    card.style.width = "120px";
+
+    const img = document.createElement("img");
+    img.src = URL.createObjectURL(file);
+    img.classList.add("img-fluid");
+    card.appendChild(img);
+
+    // optional: remove button
+    const btn = document.createElement("button");
+    btn.textContent = "X";
+    btn.classList.add("btn", "btn-sm", "btn-danger", "mt-1");
+    btn.onclick = () => {
+      imageFiles.splice(index, 1);
+      renderPreviewCards();
+    };
+    card.appendChild(btn);
+
+    previewContainer.appendChild(card);
+  });
+}
+
+// ---- Form Submit Handling ----
 document.getElementById("airPurifyForm").addEventListener("submit", async function (e) {
   e.preventDefault();
 
   const form = e.target;
-  const id = form.getAttribute("data-editing-id"); // 如果是編輯，這邊會有 ID
+  const id = form.getAttribute("data-editing-id");
   const token = localStorage.getItem("token");
 
+  // Collect normal form data
   const formData = new FormData(form);
+
+  imageFiles.forEach(fileObj => {
+  if (fileObj.isExisting) {
+    // Existing R2 image → tell backend to keep it
+    formData.append("existing_images", fileObj.url);
+  } else if (fileObj instanceof File) {
+    // New uploaded file
+    formData.append("images", fileObj);
+  }
+});
 
   const isEdit = !!id;
   const method = isEdit ? "PUT" : "POST";
@@ -205,39 +269,38 @@ document.getElementById("airPurifyForm").addEventListener("submit", async functi
 
     if (!res.ok) throw new Error(`${isEdit ? "更新" : "新增"}失敗`);
 
-    // ✅ parse returned data (make sure your backend returns JSON with id + project_name at least)
     const item = await res.json();
 
+    // ✅ Close modal
     const modal = bootstrap.Modal.getInstance(document.getElementById("addModal"));
     modal.hide();
 
+    // ✅ Update or insert row
     if (isEdit) {
-      // ✅ update existing row
       const row = document.querySelector(`tr[data-id="${id}"]`);
       if (row) {
         row.querySelector("td:first-child").textContent = item.project_name;
       }
     } else {
       const emptyRow = document.querySelector("tbody tr td[colspan='3']");
-  if (emptyRow) {
-    emptyRow.parentElement.remove(); // remove the <tr>
-  }
+      if (emptyRow) emptyRow.parentElement.remove();
 
-  // ✅ create new row
-  const tbody = document.querySelector("tbody");
-  const newRow = document.createElement("tr");
-  newRow.setAttribute("data-id", item.id);
-  newRow.innerHTML = `
-    <td>${item.project_name}</td>
-    <td><button class="btn btn-sm btn-warning edit-btn">編輯</button></td>
-    <td><button class="btn btn-sm btn-danger delete-btn">刪除</button></td>
-  `;
-  tbody.appendChild(newRow);
+      const tbody = document.querySelector("tbody");
+      const newRow = document.createElement("tr");
+      newRow.setAttribute("data-id", item.id);
+      newRow.innerHTML = `
+        <td>${item.project_name}</td>
+        <td><button class="btn btn-sm btn-warning edit-btn">編輯</button></td>
+        <td><button class="btn btn-sm btn-danger delete-btn">刪除</button></td>
+      `;
+      tbody.appendChild(newRow);
     }
 
     showBootstrapToast(`${isEdit ? "更新" : "新增"}成功`, "success");
     form.removeAttribute("data-editing-id");
     form.reset();
+    imageFiles = []; // ✅ clear after submit
+    renderPreviewCards();
   } catch (err) {
     showBootstrapToast(`${isEdit ? "更新" : "新增"}失敗: ${err.message}`, "danger");
     console.error(err);
@@ -299,40 +362,62 @@ document.addEventListener("DOMContentLoaded", function () {
         const data = await res.json();
         document.getElementById("airPurifyForm").setAttribute("data-editing-id", id);
 
-        // 填入欄位略...
+        // 填入欄位
         document.getElementById("serial").value = data.serial || "";
         document.getElementById("year").value = data.year || "";
         document.getElementById("district").value = data.district || "";
         document.getElementById("type").value = data.type || "";
         document.getElementById("project_name").value = data.project_name || "";
         document.getElementById("maintain_unit").value = data.maintain_unit || "";
+        document.getElementById("adopt_unit").value = data.adopt_unit || "";
         document.getElementById("area").value = data.area || "";
-        document.getElementById("subsidy").value = data.subsidy || "";
-        const rawDate = data.approved_date;
-        let formattedDate = "";
+        document.getElementById("length").value = data.length || "";
+        document.getElementById("subsidy_source").value = data.subsidy_source || "";
+        const startDate = data.maintain_start_date;
+        const endDate = data.maintain_end_date;
+        let formattedDate_start = "";
+        let formattedDate_end = "";
 
-        if (rawDate) {
-          const dateObj = new Date(rawDate);
+        if (startDate) {
+          const dateObj = new Date(startDate);
           const yyyy = dateObj.getFullYear();
           const mm = String(dateObj.getMonth() + 1).padStart(2, '0'); // 月份從 0 開始
           const dd = String(dateObj.getDate()).padStart(2, '0');
-          formattedDate = `${yyyy}-${mm}-${dd}`;
+          formattedDate_start = `${yyyy}-${mm}-${dd}`;
         }
 
-        document.getElementById("approved_date").value = formattedDate;
+        if (endDate) {
+          const dateObj = new Date(endDate);
+          const yyyy = dateObj.getFullYear();
+          const mm = String(dateObj.getMonth() + 1).padStart(2, '0'); // 月份從 0 開始
+          const dd = String(dateObj.getDate()).padStart(2, '0');
+          formattedDate_end = `${yyyy}-${mm}-${dd}`;
+        }
+
+        document.getElementById("maintain_start_date").value = formattedDate_start;
+        document.getElementById("maintain_end_date").value = formattedDate_end;
         
 
         document.getElementById("gps").value = data.gps || "";
-        document.getElementById("subsidy_item").value = data.subsidy_item || "";
-        document.getElementById("co2_total").value = data.co2_total || "";
+        document.getElementById("annotation").value = data.annotation || "";
+        // document.getElementById("co2_total").value = data.co2_total || "";
 
-        document.getElementById("co2").value = data.co2 || "";
-        document.getElementById("tsp").value = data.tsp || "";
-        document.getElementById("so2").value = data.so2 || "";
-        document.getElementById("no2").value = data.no2 || "";
-        document.getElementById("co").value = data.co || "";
-        document.getElementById("ozone").value = data.ozone || "";
-        document.getElementById("pan").value = data.pan || "";
+        // document.getElementById("co2").value = data.co2 || "";
+        // document.getElementById("tsp").value = data.tsp || "";
+        // document.getElementById("so2").value = data.so2 || "";
+        // document.getElementById("no2").value = data.no2 || "";
+        // document.getElementById("co").value = data.co || "";
+        // document.getElementById("ozone").value = data.ozone || "";
+        // document.getElementById("pan").value = data.pan || "";
+
+        imageFiles = [];
+      if (Array.isArray(data.image_urls)) {
+        data.image_urls.forEach(url => {
+          imageFiles.push({ url, isExisting: true });
+        });
+      }
+
+      renderPreviewCards();
         const editModal = new bootstrap.Modal(document.getElementById("addModal"));
         editModal.show();
 
@@ -343,73 +428,75 @@ document.addEventListener("DOMContentLoaded", function () {
   });
 });
 
-const imageInput = document.getElementById("imageInput");
-  const previewContainer = document.getElementById("imagePreviewContainer");
 
-  let imageFiles = []; // 保存圖片檔案的陣列
-
-  imageInput.addEventListener("change", function () {
-  const files = Array.from(this.files);
-  files.forEach(file => {
-    if (!file.type.startsWith("image/")) return;
-    imageFiles.push(file);
-  });
-
-  renderPreviewCards(); // 使用新的渲染函數
-  imageInput.value = "";
-});
 
 function renderPreviewCards() {
   previewContainer.innerHTML = "";
-  imageFiles.forEach((file, index) => {
-    const reader = new FileReader();
-    reader.onload = function (e) {
-      const card = document.createElement("div");
-      card.className = "position-relative border rounded p-1";
-      card.style.width = "100px";
-      card.style.height = "100px";
-      card.style.overflow = "hidden";
-      card.draggable = true;
 
+  imageFiles.forEach((fileObj, index) => {
+    const card = document.createElement("div");
+    card.className = "position-relative border rounded p-1";
+    card.style.width = "100px";
+    card.style.height = "100px";
+    card.style.overflow = "hidden";
+    card.draggable = true;
+
+    // Determine image src
+    if (fileObj instanceof File) {
+      // New file (Blob)
+      const reader = new FileReader();
+      reader.onload = function (e) {
+        card.innerHTML = `
+          <img src="${e.target.result}" class="img-fluid rounded" style="max-height: 100%; object-fit: cover;">
+          <button type="button" class="btn btn-sm btn-danger position-absolute top-0 end-0 m-1 px-1 py-0 delete-btn" style="z-index: 10;">×</button>
+        `;
+        attachCardEvents(card, index);
+      };
+      reader.readAsDataURL(fileObj);
+    } else if (fileObj.isExisting && fileObj.url) {
+      // Existing R2 image
       card.innerHTML = `
-        <img src="${e.target.result}" class="img-fluid rounded" style="max-height: 100%; object-fit: cover;">
+        <img src="${fileObj.url}" class="img-fluid rounded" style="max-height: 100%; object-fit: cover;">
         <button type="button" class="btn btn-sm btn-danger position-absolute top-0 end-0 m-1 px-1 py-0 delete-btn" style="z-index: 10;">×</button>
       `;
+      attachCardEvents(card, index);
+    }
 
-      // 刪除事件
-      card.querySelector(".delete-btn").addEventListener("click", function () {
-        imageFiles.splice(index, 1);
-        renderPreviewCards();
-      });
+    previewContainer.appendChild(card);
+  });
+}
 
-      // 拖曳事件
-      card.addEventListener("dragstart", function (e) {
-        e.dataTransfer.setData("text/plain", index);
-      });
+// 🔧 helper: attach delete + drag-drop events
+function attachCardEvents(card, index) {
+  // 刪除事件
+  card.querySelector(".delete-btn").addEventListener("click", function () {
+    imageFiles.splice(index, 1);
+    renderPreviewCards();
+  });
 
-      card.addEventListener("dragover", function (e) {
-        e.preventDefault();
-        card.classList.add("border-primary");
-      });
+  // 拖曳事件
+  card.addEventListener("dragstart", function (e) {
+    e.dataTransfer.setData("text/plain", index);
+  });
 
-      card.addEventListener("dragleave", function () {
-        card.classList.remove("border-primary");
-      });
+  card.addEventListener("dragover", function (e) {
+    e.preventDefault();
+    card.classList.add("border-primary");
+  });
 
-      card.addEventListener("drop", function (e) {
-        e.preventDefault();
-        card.classList.remove("border-primary");
-        const fromIndex = e.dataTransfer.getData("text/plain");
-        const toIndex = index;
+  card.addEventListener("dragleave", function () {
+    card.classList.remove("border-primary");
+  });
 
-        const movedFile = imageFiles.splice(fromIndex, 1)[0];
-        imageFiles.splice(toIndex, 0, movedFile);
-        renderPreviewCards(); // 再次重渲染，重新綁定事件
-      });
+  card.addEventListener("drop", function (e) {
+    e.preventDefault();
+    card.classList.remove("border-primary");
+    const fromIndex = e.dataTransfer.getData("text/plain");
+    const toIndex = index;
 
-      previewContainer.appendChild(card);
-    };
-    reader.readAsDataURL(file);
+    const movedFile = imageFiles.splice(fromIndex, 1)[0];
+    imageFiles.splice(toIndex, 0, movedFile);
+    renderPreviewCards(); // 再次重渲染，重新綁定事件
   });
 }
 

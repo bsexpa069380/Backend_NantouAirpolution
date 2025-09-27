@@ -61,18 +61,33 @@
             <input type="hidden" id="announcementId" name="id">
 
             <div class="mb-3">
-              <label for="title" class="form-label">文章標題</label>
+              <label for="title" class="form-label">樹種標題</label>
               <input type="text" class="form-control" id="title" name="title" required>
             </div>
 
             <div class="mb-3">
-              <label for="date" class="form-label">發佈日期</label>
-              <input type="date" class="form-control" id="date" name="date" required>
+              <label for="content" class="form-label">學名</label>
+              <input type="content" class="form-control" id="scientific_name" name="scientific_name" required>
             </div>
 
             <div class="mb-3">
-              <label for="content" class="form-label">文章內容</label>
-              <textarea class="form-control" id="content" name="content" rows="4" required></textarea>
+              <label for="content" class="form-label">物候</label>
+              <textarea class="form-control" id="plant_phenology" name="plant_phenology" rows="4" required></textarea>
+            </div>
+
+            <div class="mb-3">
+              <label for="content" class="form-label">特色</label>
+              <textarea class="form-control" id="features" name="features" rows="2" required></textarea>
+            </div>
+
+            <div class="mb-3">
+              <label for="content" class="form-label">天然分佈</label>
+              <textarea class="form-control" id="natural_distribution" name="natural_distribution" rows="2" required></textarea>
+            </div>
+
+            <div class="mb-3">
+              <label for="content" class="form-label">用途</label>
+              <textarea class="form-control" id="usage" name="usage" rows="2" required></textarea>
             </div>
 
             <div class="mb-3">
@@ -117,8 +132,11 @@
     function openAddModal() {
       document.getElementById("announcementId").value = "";
       document.getElementById("title").value = "";
-      document.getElementById("date").value = "";
-      document.getElementById("content").value = "";
+      document.getElementById("scientific_name").value = "";
+      document.getElementById("plant_phenology").value = "";
+      document.getElementById("features").value = "";
+      document.getElementById("natural_distribution").value =  "";
+      document.getElementById("usage").value = "";
       document.getElementById("image").value = "";
     }
 
@@ -159,8 +177,11 @@
 
         document.getElementById("announcementId").value = data.id;
         document.getElementById("title").value = data.title || "";
-        document.getElementById("date").value = (new Date(data.date)).toISOString().split("T")[0];
-        document.getElementById("content").value = data.content || "";
+        document.getElementById("scientific_name").value = data.scientific_name ||"";
+        document.getElementById("plant_phenology").value = data.plant_phenology ||"";
+        document.getElementById("features").value = data.features ||"";
+        document.getElementById("natural_distribution").value = data.natural_distribution || "";
+        document.getElementById("usage").value = data.usage || "";
         const modal = new bootstrap.Modal(document.getElementById("modalForm"));
         modal.show();
       }
