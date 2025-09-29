@@ -2004,7 +2004,7 @@ section,
   position: relative;
   height: 50vh;
   min-height: 500px;
-  border-radius: 0 0 24px 24px;
+  border-radius: 24px;
   overflow: hidden;
 }
 
