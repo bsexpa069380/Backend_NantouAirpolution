@@ -279,18 +279,18 @@
                     <div class="vital-signs">
                       <div class="vital-item">
                         <span class="vital-label">基地</span>
-                        <span class="vital-value">72</span>
+                        <span class="vital-value" id = purfication_count>72</span>
                         <span class="vital-label">處</span>
                         
                       </div>
                       <div class="vital-item">
                         <span class="vital-label">面積</span>
-                        <span class="vital-value">120</span>
+                        <span class="vital-value" id = purfication_areaSum>120</span>
                         <span class="vital-label">m² </span>
                       </div>
                       <div class="vital-item">
                         <span class="vital-label">長度</span>
-                        <span class="vital-value">300</span>
+                        <span class="vital-value" id = purfication_lengthSum>300</span>
                         <span class="vital-label">m</span>
                       </div>
                     </div>
@@ -301,13 +301,13 @@
                     <div class="vital-signs">
                       <div class="vital-item">
                         <span class="vital-label">基地</span>
-                        <span class="vital-value">100</span>
+                        <span class="vital-value" id = green_wall_count>100</span>
                         <span class="vital-label">處</span>
                         
                       </div>
                       <div class="vital-item">
                         <span class="vital-label">面積</span>
-                        <span class="vital-value">67800</span>
+                        <span class="vital-value" id = green_wall_areaSum>67800</span>
                         <span class="vital-label">m² </span>
                       </div>
 
@@ -628,6 +628,40 @@
       });
   
       let active = null;
+
+      async function fetchAndUpdate(target, evt) {
+      const district = target.dataset.title;
+      const mapType = wrap.dataset.map; 
+      // mapType 可能是 "air" / "wall" / "green"
+      let table = "purification_zones";
+      if (mapType === "wall") table = "green_walls";
+      if (mapType === "buty") table = "greenifications";
+
+      try {
+        const res = await fetch(`/api/summary?table=${table}&district=${district}`);
+        if (!res.ok) throw new Error("API error");
+        const data = await res.json();
+
+        tooltip.innerHTML = `
+              <div style="font-weight:bold; font-size:16px; text-align:center;">${district}</div>
+              <div style="font-size:22px; font-weight:bold; margin-top:4px;">${data.count} 處</div>
+    `
+
+        // // 更新 tooltip
+        // ttTitle.textContent = district;
+        // ttDesc.textContent  = `${data.table}`;
+        // if (ttNumLink) {
+        //   ttNumLink.textContent = data.count;
+        //   ttNumLink.setAttribute('href', '#');
+        // }
+
+        // 定位 tooltip
+        showTooltip(target, evt);
+
+      } catch (err) {
+        console.error("❌ Failed to fetch summary:", err);
+      }
+    }
   
       function showTooltip(target, evt) {
         ttTitle.textContent = target.dataset.title || target.getAttribute('aria-label') || '資訊';
@@ -673,7 +707,7 @@
         } else {
           target.setAttribute('aria-pressed','true');
           active = target;
-          showTooltip(target, evt);
+          fetchAndUpdate(target, evt);
         }
       }
   
@@ -695,6 +729,123 @@
           active = null; hideTooltip();
         }
       });
+
     });
+
+ 
+    async function loadSummary(table, district = "default") {
+  try {
+    const res = await fetch(`/api/summary?table=${table}&district=${district}`);
+    if (!res.ok) throw new Error("Failed to fetch summary");
+
+    const data = await res.json();
+
+    // Map API table names → HTML element IDs
+    if (table === "purification_zones") {
+      document.getElementById("purfication_count").textContent = data.count;
+      document.getElementById("purfication_areaSum").textContent = data.area;
+      document.getElementById("purfication_lengthSum").textContent = data.length;
+    } else if (table === "green_walls") {
+      document.getElementById("green_wall_count").textContent = data.count;
+      document.getElementById("green_wall_areaSum").textContent = data.area;
+      // if you also want to show length for green walls, add:
+      // document.getElementById("green_wall_lengthSum").textContent = data.length;
+    }
+  } catch (err) {
+    console.error("Error fetching summary:", err);
+  }
+}
+document.addEventListener("DOMContentLoaded", () => {
+  loadSummary("purification_zones"); 
+  loadSummary("green_walls"); 
+});
+
   })();
+
+//   // map and tooltip
+//   async function fetchSummary(table, district = "default") {
+//   try {
+//     const res = await fetch(`/api/summary?table=${table}&district=${district}`);
+//     if (!res.ok) throw new Error("Failed to fetch");
+
+//     const data = await res.json();
+
+//     // Update tooltip with data
+//     const tooltip = document.getElementById("tooltip");
+//     tooltip.innerHTML = `
+//       <div style="font-weight:bold; font-size:16px;">${district}</div>
+//       <div style="font-size:20px; font-weight:bold;">${data.count}</div>
+//       <div>點擊以查看資訊</div>
+//     `;
+//     tooltip.style.display = "block";
+//   } catch (err) {
+//     console.error("Error fetching summary:", err);
+//   }
+// }
+
+// document.addEventListener("DOMContentLoaded", () => {
+//   const svg = document.querySelector("#wall-map svg");
+//   const tooltip = document.getElementById("tooltip");
+
+//   if (!svg) return;
+
+//   svg.querySelectorAll("path").forEach(path => {
+//     path.addEventListener("click", e => {
+//       let rawId = path.id || "";
+//       let district = rawId.replace(/^_/, "").replace(/-\d+$/, "");
+
+//       // Move tooltip near click position
+//       const rect = svg.getBoundingClientRect();
+//       tooltip.style.left = (e.clientX - rect.left + 10) + "px";
+//       tooltip.style.top = (e.clientY - rect.top - 20) + "px";
+
+//       // Call API for green_walls
+//       fetchSummary("green_walls", district);
+//     });
+//   });
+// });
+
+// document.addEventListener("DOMContentLoaded", () => {
+//   const svg = document.querySelector("#air-map svg");
+//   const tooltip = document.getElementById("tooltip");
+
+//   if (!svg) return;
+
+//   svg.querySelectorAll("path").forEach(path => {
+//     path.addEventListener("click", e => {
+//       let rawId = path.id || "";
+//       let district = rawId.replace(/^_/, "").replace(/-\d+$/, "");
+
+//       // Move tooltip near click position
+//       const rect = svg.getBoundingClientRect();
+//       tooltip.style.left = (e.clientX - rect.left + 10) + "px";
+//       tooltip.style.top = (e.clientY - rect.top - 20) + "px";
+
+//       // Call API for green_walls
+//       fetchSummary("green_walls", district);
+//     });
+//   });
+// });
+
+// document.addEventListener("DOMContentLoaded", () => {
+//   const svg = document.querySelector("#buty-map svg");
+//   const tooltip = document.getElementById("tooltip");
+
+//   if (!svg) return;
+
+//   svg.querySelectorAll("path").forEach(path => {
+//     path.addEventListener("click", e => {
+//       let rawId = path.id || "";
+//       let district = rawId.replace(/^_/, "").replace(/-\d+$/, "");
+
+//       // Move tooltip near click position
+//       const rect = svg.getBoundingClientRect();
+//       tooltip.style.left = (e.clientX - rect.left + 10) + "px";
+//       tooltip.style.top = (e.clientY - rect.top - 20) + "px";
+
+//       // Call API for green_walls
+//       fetchSummary("green_walls", district);
+//     });
+//   });
+// });
   </script>

@@ -1358,33 +1358,76 @@ def delete_file(id):
         cursor.close()
         conn.close()
 ### --------------------------------- AREA ARRGEGATION -------------------------------------------##
-@app.route("/api/areas/total", methods=["GET"])
-def get_total_area():
-    conn = get_db_connection()   # however you get your psycopg2 connection
+
+
+
+@app.route("/api/summary", methods=["GET"])
+def get_summary():
+    table = request.args.get("table", "").strip()
+    district = request.args.get("district", "default").strip()
+
+    # ✅ allow only known tables (to prevent SQL injection)
+    valid_tables = ["greenifications", "green_walls", "purification_zones"]
+    if table not in valid_tables:
+        return jsonify({"error": "Invalid table"}), 400
+
+    conn = get_db_connection()
     cursor = conn.cursor()
 
-    try:
-        cursor.execute("""
-            SELECT 
-                COALESCE((SELECT SUM(area) FROM greenifications), 0) AS greenifications_area,
-                COALESCE((SELECT SUM(area) FROM greenwalls), 0) AS greenwalls_area,
-                COALESCE((SELECT SUM(area) FROM purification_zones), 0) AS purification_zones_area
-        """)
-        row = cursor.fetchone()
+    # build WHERE clause
+    where_clause = ""
+    params = {}
+    if district != "default":
+        where_clause = "WHERE district = %(district)s"
+        params["district"] = district
 
-        greenifications_area, greenwalls_area, purification_zones_area = row
-        total_area = greenifications_area + greenwalls_area + purification_zones_area
+    query = f"""
+        SELECT COUNT(*)::int,
+               COALESCE(SUM(area),0)::int,
+               COALESCE(SUM(length),0)::int
+        FROM {table} {where_clause}
+    """
 
-        return jsonify({
-            "greenifications_area": float(greenifications_area),
-            "greenwalls_area": float(greenwalls_area),
-            "purification_zones_area": float(purification_zones_area),
-            "total_area": float(total_area)
-        })
+    cursor.execute(query, params)
+    c, a, l = cursor.fetchone()
 
-    finally:
-        cursor.close()
-        conn.close()
+    cursor.close()
+    conn.close()
+
+    return jsonify({
+        "table": table,
+        "district": district,
+        "count": c,
+        "area": a,
+        "length": l
+    })
+# @app.route("/api/areas/total", methods=["GET"])
+# def get_total_area():
+#     conn = get_db_connection()   # however you get your psycopg2 connection
+#     cursor = conn.cursor()
+
+#     try:
+#         cursor.execute("""
+#             SELECT 
+#                 COALESCE((SELECT SUM(area) FROM greenifications), 0) AS greenifications_area,
+#                 COALESCE((SELECT SUM(area) FROM greenwalls), 0) AS greenwalls_area,
+#                 COALESCE((SELECT SUM(area) FROM purification_zones), 0) AS purification_zones_area
+#         """)
+#         row = cursor.fetchone()
+
+#         greenifications_area, greenwalls_area, purification_zones_area = row
+#         total_area = greenifications_area + greenwalls_area + purification_zones_area
+
+#         return jsonify({
+#             "greenifications_area": float(greenifications_area),
+#             "greenwalls_area": float(greenwalls_area),
+#             "purification_zones_area": float(purification_zones_area),
+#             "total_area": float(total_area)
+#         })
+
+#     finally:
+#         cursor.close()
+#         conn.close()
 
 # 健康檢查
 @app.get("/healthz")
