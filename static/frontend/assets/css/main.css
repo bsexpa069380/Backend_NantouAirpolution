@@ -66,7 +66,7 @@ a {
 }
 
 a:hover {
-  color: color-mix(in srgb, var(--accent-color), transparent 25%);
+  color: color-mix(in srgb, var(--bs-success-text-emphasis), transparent 25%);
   text-decoration: none;
 }
 
@@ -4797,4 +4797,66 @@ section,
     border-radius: 25px;
     font-weight: 400;
     transition: all 0.3s ease;
+}
+.img-limit {
+  max-width: 100%;
+  max-height: 500px;
+  width: auto;
+  height: auto;
+  object-fit: contain; /* 圖片超出比例時自動縮放置中 */
+}
+
+
+
+/* 置中與寬度控制 */
+#custCarousel {
+  text-align: left;
+}
+
+/* 主圖大小：最大 750x500，cover 裁切 */
+#custCarousel .carousel-item img {
+  width: 100%;
+  max-width: 1000px;
+  height: 500px;
+  object-fit: cover;
+  margin: 0 auto;
+  display: block;
+}
+
+/* 縮圖列：使用 Bootstrap 的 indicators 區塊但改成縮圖外觀 */
+#custCarousel .carousel-indicators {
+  position: static;           /* 讓縮圖顯示在輪播下方 */
+  margin-top: 1rem;
+  gap: .5rem;
+}
+#custCarousel .carousel-indicators [data-bs-target] {
+  width: auto;
+  height: auto;
+  padding: 0;
+  border: 0;
+  background: transparent;    /* 移除預設圓點樣式 */
+  opacity: 1;                 /* 讓縮圖不被半透明 */
+}
+#custCarousel .carousel-indicators img {
+  display: block;
+  height: 76px;               /* 縮圖高度可調 */
+  width: 120px;               /* 可視需要固定寬度；或改用 auto */
+  object-fit: cover;
+  border-radius: .5rem;
+  border: 2px solid transparent;
+}
+#custCarousel .carousel-indicators .active img,
+#custCarousel .carousel-indicators [aria-current="true"] img {
+  border-color: #0d6efd;      /* 作用中縮圖外框色 */
+}
+
+/* 小尺寸螢幕時縮小縮圖 */
+@media (max-width: 576px) {
+  #custCarousel .carousel-indicators img {
+    height: 56px;
+    width: 90px;
+  }
+  #custCarousel .carousel-item img {
+    height: 360px;            /* 手機上降低主圖高度 */
+  }
 }
