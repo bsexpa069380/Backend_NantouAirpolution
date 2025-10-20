@@ -4860,3 +4860,44 @@ section,
     height: 360px;            /* 手機上降低主圖高度 */
   }
 }
+
+:root{
+  /* 你可以調整這兩個變數來改整體配色 */
+  --table-green: #8cc63f;   /* 邊框綠 */
+  --cell-green-50: #f2fae8; /* 左欄淡綠底 */
+}
+
+.aqp-table.table {
+  border-color: var(--table-green);
+}
+.aqp-table.table > :not(caption) > * > * {
+  /* 讓所有格線都用綠色 */
+  border-color: var(--table-green);
+  vertical-align: middle;
+  font-size: 1rem;
+}
+/* 左欄（欄名）背景與字重 */
+.aqp-th {
+  width: 28%;
+  background: var(--cell-green-50);
+  font-weight: 600;
+  white-space: nowrap;
+}
+/* 右欄內容 */
+.aqp-td {
+  background: #fff;
+}
+/* 讓表格外觀更接近截圖：較大的內距與行高 */
+.aqp-table.table > :not(caption) > * > * {
+  padding: .9rem .75rem;
+}
+/* 手機上維持可橫向捲動，不會擠壓斷行 */
+.table-responsive {
+  border: 1px solid var(--table-green);
+  border-radius: .25rem;
+}
+/* 連結外觀（“詳細資料”） */
+.aqp-link {
+  color: #0d6efd;
+  text-decoration: underline;
+}
