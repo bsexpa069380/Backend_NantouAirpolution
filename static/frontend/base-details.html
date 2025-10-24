@@ -316,6 +316,178 @@
 
   <!-- Main JS File -->
   <script src="assets/js/main.js"></script>
+  <script>
+    (() => {
+      // If your API is on another domain, set it here (e.g., "https://api.example.com")
+      const API_BASE = ""; // same-origin by default
+    
+      // 1) Read URL params
+      const qp = new URLSearchParams(location.search);
+      const rawType = (qp.get("type") || "").trim();
+      const id = Number(qp.get("id"));
+    
+      // 2) Map human types to REST resources
+      const TYPE_MAP = {
+        "空氣品質淨化": "purification_zones",
+        "空氣品質淨化區": "purification_zones",
+        "air": "purification_zones",
+        "purification": "purification_zones",
+        "綠美化": "greenifications",
+        "清淨綠牆": "green_walls"
+      };
+    
+      const resource = TYPE_MAP[rawType] || "purification_zones";
+      const primary = `${API_BASE}/api/${resource}/${id}`;
+      const fallback = `${API_BASE}/api/${resource}`;
+    
+      // 3) Helpers
+      const $ = (sel) => document.querySelector(sel);
+    
+      function cellFor(label) {
+        const rows = document.querySelectorAll(".aqp-table tr");
+        for (const tr of rows) {
+          const th = tr.querySelector("th");
+          const td = tr.querySelector("td");
+          if (th && td && th.textContent.trim() === label) return td;
+        }
+        return null;
+      }
+    
+      const setCell = (label, value) => {
+        const td = cellFor(label);
+        if (td) td.textContent = (value ?? "").toString();
+      };
+    
+      function fmtDate(d) {
+        if (!d) return "";
+        const dt = new Date(d);
+        if (isNaN(dt)) return String(d);
+        const y = dt.getFullYear();
+        const m = String(dt.getMonth()+1).padStart(2,"0");
+        const dd= String(dt.getDate()).padStart(2,"0");
+        return `${y}/${m}/${dd}`;
+      }
+    
+      function normalizeImages(v) {
+        if (!v) return [];
+        if (Array.isArray(v)) return v.filter(Boolean);
+        if (typeof v === "string") {
+          try {
+            const j = JSON.parse(v);
+            if (Array.isArray(j)) return j.filter(Boolean);
+          } catch (_) {}
+          return v.split(/[\s,|]+/).map(s => s.trim()).filter(Boolean);
+        }
+        return [];
+      }
+    
+      function renderCarousel(images) {
+        const inner = document.querySelector("#custCarousel .carousel-inner");
+        const ind   = document.querySelector("#custCarousel .carousel-indicators");
+        if (!inner || !ind) return;
+    
+        inner.innerHTML = "";
+        ind.innerHTML = "";
+    
+        const list = images.length ? images : ["https://placehold.co/1200x600?text=No+Image"];
+    
+        list.forEach((src, i) => {
+          const item = document.createElement("div");
+          item.className = "carousel-item" + (i === 0 ? " active" : "");
+          item.innerHTML = `<img src="${src}" class="d-block w-100" alt="slide ${i+1}">`;
+          inner.appendChild(item);
+    
+          const btn = document.createElement("button");
+          btn.type = "button";
+          btn.setAttribute("data-bs-target", "#custCarousel");
+          btn.setAttribute("data-bs-slide-to", String(i));
+          if (i === 0) { btn.className = "active"; btn.setAttribute("aria-current", "true"); }
+          btn.setAttribute("aria-label", `Slide ${i+1}`);
+          btn.innerHTML = `<img src="${src}" alt="thumb ${i+1}" style="height:36px">`;
+          ind.appendChild(btn);
+        });
+      }
+    
+      function showAlert(msg, variant="info") {
+        let box = document.getElementById("project-alert");
+        if (!box) {
+          box = document.createElement("div");
+          box.id = "project-alert";
+          box.className = `alert alert-${variant} mt-3`;
+          const host = document.querySelector("#starter-section .container") || document.body;
+          host.appendChild(box);
+        }
+        box.className = `alert alert-${variant} mt-3`;
+        box.textContent = msg;
+      }
+    
+      // 4) Bootstrap: validate params
+      if (!id) {
+        showAlert("缺少 URL 參數：?id=（例如 ?id=1）", "danger");
+        return;
+      }
+    
+      // 5) Load + render
+      (async function load() {
+        showAlert("載入中…", "info");
+    
+        let data;
+        try {
+          const r = await fetch(primary, { credentials: "same-origin" });
+          if (!r.ok) throw new Error(`HTTP ${r.status}`);
+          data = await r.json();
+        } catch (e) {
+          try {
+            const r2 = await fetch(fallback, { credentials: "same-origin" });
+            const arr = await r2.json();
+            data = (arr || []).find(x => Number(x?.id) === id);
+          } catch (e2) {
+            // ignore; handled below
+          }
+        }
+    
+        if (!data) {
+          showAlert("找不到對應資料（請檢查 type 與 id 是否正確）", "danger");
+          return;
+        }
+    
+        // --- Field mapping (adjust to your actual keys if different) ---
+        // Expected keys: serial, year, subsidy_source, district, project_name, type,
+        // area, length, gps, maintain_unit, adopt_unit, maintain_start_date, maintain_end_date,
+        // annotation, image_urls
+        renderCarousel(normalizeImages(data.image_urls));
+    
+        setCell("序號", data.serial);
+        setCell("設置年度", data.year);
+        setCell("設置經費來源", data.subsidy_source);
+        setCell("鄉鎮別", data.district);
+        setCell("基地名稱", data.project_name);
+        setCell("類別", data.type);
+        setCell("基地面積(平方公尺)", data.area);
+        setCell("基地長度(公尺)", data.length);
+        setCell("GPS座標", data.gps);
+        setCell("維護單位", data.maintain_unit);
+        setCell("認養單位", data.adopt_unit);
+    
+        const range = [fmtDate(data.maintain_start_date), fmtDate(data.maintain_end_date)]
+          .filter(Boolean).join(" ~ ");
+        setCell("認養日期", range);
+    
+        const descCell = cellFor("說明");
+        if (descCell) descCell.textContent = data.annotation || "";
+    
+        // Breadcrumb last item becomes project name
+        const crumbs = document.querySelectorAll(".breadcrumbs .current");
+        if (crumbs.length && data.project_name) {
+          crumbs[crumbs.length - 1].textContent = data.project_name;
+        }
+    
+        showAlert("載入完成", "success");
+        setTimeout(() => { const a = $("#project-alert"); a && a.remove(); }, 1500);
+      })();
+    })();
+    </script>
+    
 
 </body>
 

@@ -235,6 +235,166 @@
 
   <!-- Main JS File -->
   <script src="assets/js/main.js"></script>
+  <script>
+    (() => {
+      // ==== CONFIG ====
+      const API_BASE = "";              // set to "http://127.0.0.1:5000" if API runs elsewhere
+      const RESOURCE = "tree_intros";   // /api/tree_intros and /api/tree_intros/:id
+      const DEFAULT_PAGE_SIZE = 12;
+      const DETAIL_PAGE = "species-page.html";
+    
+      // Read ?page & ?limit (1-based)
+      const urlp  = new URLSearchParams(location.search);
+      const PAGE  = Math.max(1, parseInt(urlp.get("page")  || "1", 10));
+      const LIMIT = Math.max(1, parseInt(urlp.get("limit") || DEFAULT_PAGE_SIZE, 10));
+    
+      // Targets
+      const grid      = document.querySelector('#search-results-posts .row');
+      const pagerWrap = document.querySelector('#pagination-3 .container .d-flex');
+    
+      // Helpers
+      const esc = (s) => (s == null ? "" : String(s));
+      const detailURL = (id) => `${DETAIL_PAGE}?id=${encodeURIComponent(id)}`;
+      const pickName = (row) =>
+        row.name ?? row.common_name ?? row.chinese_name ?? row.title ?? "(未命名)";
+    
+      const pickImage = (row) =>
+        row.image_url ?? row.photo ?? row.cover_url ?? "https://placehold.co/600x400?text=No+Image";
+    
+      function showAlert(msg, variant="info") {
+        const container = document.querySelector("#search-results-posts .container");
+        if (!container) return;
+        let box = document.getElementById("species-alert");
+        if (!box) {
+          box = document.createElement("div");
+          box.id = "species-alert";
+          container.prepend(box);
+        }
+        box.className = `alert alert-${variant}`;
+        box.textContent = msg;
+      }
+    
+      function renderSkeleton(count = 9) {
+        if (!grid) return;
+        grid.innerHTML = "";
+        for (let i = 0; i < count; i++) {
+          const col = document.createElement("div");
+          col.className = "col-6 col-lg-4";
+          col.innerHTML = `
+            <article class="placeholder-wave">
+              <div class="post-img img-hover-zoom">
+                <div class="placeholder" style="width:100%;aspect-ratio:4/3;"></div>
+              </div>
+              <p class="post-category placeholder col-4">&nbsp;</p>
+              <h1 class="title d-flex justify-content-between align-items-center">
+                <span class="plant-name placeholder col-6">&nbsp;</span>
+              </h1>
+            </article>`;
+          grid.appendChild(col);
+        }
+      }
+    
+      function renderList(items) {
+        if (!grid) return;
+        grid.innerHTML = "";
+    
+        if (!Array.isArray(items) || items.length === 0) {
+          grid.innerHTML = `<div class="col-12"><div class="alert alert-secondary">目前沒有樹種資料。</div></div>`;
+          return;
+        }
+    
+        items.forEach((row, idx) => {
+          const id    = row.id;
+          const name  = pickName(row);
+          const img   = pickImage(row);
+    
+          const col = document.createElement("div");
+          col.className = "col-6 col-lg-4";
+          col.setAttribute("data-aos", "fade-up");
+          col.setAttribute("data-aos-delay", String(100 + 25 * (idx % 6)));
+    
+          col.innerHTML = `
+            <article>
+              <a href="${detailURL(id)}">
+                <div class="post-img img-hover-zoom">
+                  <img src="${esc(img)}" alt="${esc(name)}" class="img-fluid">
+                </div>
+                <p class="post-category">植物名</p>
+                <h1 class="title d-flex justify-content-between align-items-center">
+                  <span class="plant-name">${esc(name)}</span>
+                  <i class="bi bi-arrow-right-circle-fill ms-2"></i>
+                </h1>
+              </a>
+            </article>`;
+          grid.appendChild(col);
+        });
+      }
+    
+      function renderPagination({ page, totalPages }) {
+        if (!pagerWrap) return;
+        const ul = document.createElement("ul");
+    
+        const addLink = (label, p, active=false, disabled=false) => {
+          const li = document.createElement("li");
+          const a  = document.createElement("a");
+          a.href = disabled ? "#" : `?page=${p}&limit=${LIMIT}`;
+          if (active) a.className = "active";
+          a.innerHTML = label;
+          if (disabled) a.setAttribute("aria-disabled", "true");
+          li.appendChild(a);
+          ul.appendChild(li);
+        };
+    
+        addLink('<i class="bi bi-chevron-left"></i>', Math.max(1, page - 1), false, page === 1);
+    
+        const windowSize = 5;
+        let start = Math.max(1, page - Math.floor(windowSize / 2));
+        let end   = Math.min(totalPages, start + windowSize - 1);
+        if (end - start + 1 < windowSize) start = Math.max(1, end - windowSize + 1);
+    
+        if (start > 1) addLink("1", 1);
+        if (start > 2) { const dot = document.createElement("li"); dot.textContent = "..."; ul.appendChild(dot); }
+    
+        for (let p = start; p <= end; p++) addLink(String(p), p, p === page);
+    
+        if (end < totalPages - 1) { const dot = document.createElement("li"); dot.textContent = "..."; ul.appendChild(dot); }
+        if (end < totalPages) addLink(String(totalPages), totalPages);
+    
+        addLink('<i class="bi bi-chevron-right"></i>', Math.min(totalPages, page + 1), false, page === totalPages);
+    
+        pagerWrap.innerHTML = "";
+        pagerWrap.appendChild(ul);
+      }
+    
+      // Data loaders (server returns full array; we paginate client-side)
+      async function fetchAllThenSlice() {
+        const res = await fetch(`${API_BASE}/api/${RESOURCE}`, { credentials: "same-origin" });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const all = await res.json();  // expecting an array of rows: { id, name?, image_url?, ... }
+        const total = Array.isArray(all) ? all.length : 0;
+        const start = (PAGE - 1) * LIMIT;
+        const pageItems = (Array.isArray(all) ? all : []).slice(start, start + LIMIT);
+        return { items: pageItems, page: PAGE, total, totalPages: Math.max(1, Math.ceil(total / LIMIT)) };
+      }
+    
+      (async function init() {
+        renderSkeleton(9);
+        showAlert("載入中…", "info");
+        try {
+          const payload = await fetchAllThenSlice();
+          renderList(payload.items);
+          renderPagination({ page: payload.page, totalPages: payload.totalPages });
+          showAlert("載入完成", "success");
+          setTimeout(() => document.getElementById("species-alert")?.remove(), 1200);
+        } catch (err) {
+          console.error(err);
+          showAlert("載入樹種列表失敗，請稍後再試。", "danger");
+          if (grid) grid.innerHTML = "";
+        }
+      })();
+    })();
+    </script>
+    
 
 </body>
 

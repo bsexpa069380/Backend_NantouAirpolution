@@ -107,11 +107,25 @@ def jwt_required(f):
 # ✅ 取得所有空氣淨化區
 @app.get("/api/purification_zones")
 def get_all_zones():
+    year = request.args.get("year")
+    district = request.args.get("district")
+
+    sql = "SELECT * FROM purification_zones WHERE 1=1"
+    params = []
+
+    if year:
+        sql += " AND year = %s"
+        params.append(year)
+    if district:
+        sql += " AND district = %s"
+        params.append(district)
+
+    sql += " ORDER BY created_at DESC"
     conn = get_db_connection()
     cursor = conn.cursor(cursor_factory=RealDictCursor)
 
     try:
-        cursor.execute("SELECT * FROM purification_zones ORDER BY created_at DESC;")
+        cursor.execute(sql, params)
         rows = cursor.fetchall()
         return jsonify(rows), 200
 
@@ -385,11 +399,25 @@ def update_visibility():
 # ✅ 取得所有空氣綠牆區
 @app.get("/api/green_walls")
 def get_all_greenWalls():
+    year = request.args.get("year")
+    district = request.args.get("district")
+
+    sql = "SELECT * FROM green_walls WHERE 1=1"
+    params = []
+
+    if year:
+        sql += " AND year = %s"
+        params.append(year)
+    if district:
+        sql += " AND district = %s"
+        params.append(district)
+
+    sql += " ORDER BY created_at DESC"
     conn = get_db_connection()
     cursor = conn.cursor(cursor_factory=RealDictCursor)
 
     try:
-        cursor.execute("SELECT * FROM green_walls ORDER BY created_at DESC;")
+        cursor.execute(sql, params)
         rows = cursor.fetchall()
         return jsonify(rows), 200
 
@@ -617,11 +645,25 @@ def delete_greenWall(id):
 # ✅ 取得所有綠美化
 @app.get("/api/greenifications")
 def get_all_greenifications():
+    year = request.args.get("year")
+    district = request.args.get("district")
+
+    sql = "SELECT * FROM greenifications WHERE 1=1"
+    params = []
+
+    if year:
+        sql += " AND year = %s"
+        params.append(year)
+    if district:
+        sql += " AND district = %s"
+        params.append(district)
+
+    sql += " ORDER BY created_at DESC"
     conn = get_db_connection()
     cursor = conn.cursor(cursor_factory=RealDictCursor)
 
     try:
-        cursor.execute("SELECT * FROM greenifications ORDER BY created_at DESC;")
+        cursor.execute(sql, params)
         rows = cursor.fetchall()
         return jsonify(rows), 200
 
@@ -868,14 +910,13 @@ def create_tree_intro():
         data = request.form
 
         cursor.execute("""
-            INSERT INTO tree_intros (title, date, scientific_name ,plant_phenology,features,
+            INSERT INTO tree_intros (title, scientific_name ,plant_phenology,features,
             natural_distribution, usage, image_url)
-            VALUES (%s, %s, %s, %s, %s,
+            VALUES (%s, %s, %s, %s,
                     %s, %s, %s)
             RETURNING *;
         """, (
             data.get("title"),
-            data.get("date"),
             data.get("scientific_name"),
             data.get("plant_phenology"),
             data.get("features"),
@@ -952,7 +993,6 @@ def update_tree_intro(id):
         cursor.execute("""
             UPDATE tree_intros
             SET title = %s,
-                date = %s,
                 scientific_name = %s,
                 plant_phenology = %s,
                 features = %s,
@@ -963,7 +1003,6 @@ def update_tree_intro(id):
             RETURNING *;
         """, (
             data.get("title"),
-            data.get("date"),
             data.get("scientific_name"),
             data.get("plant_phenology"),
             data.get("features"),

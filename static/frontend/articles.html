@@ -260,6 +260,222 @@
 
   <!-- Main JS File -->
   <script src="assets/js/main.js"></script>
+  <script>
+    (() => {
+      // ====== CONFIG ======
+      const API_BASE = "";          // set to your API origin if cross-domain
+      const RESOURCE = "result";   // list endpoint: /api/results
+      const DEFAULT_PAGE_SIZE = 8;
+    
+      // Read ?page & ?limit (1-based)
+      const urlp  = new URLSearchParams(location.search);
+      const PAGE  = Math.max(1, parseInt(urlp.get("page")  || "1", 10));
+      const LIMIT = Math.max(1, parseInt(urlp.get("limit") || DEFAULT_PAGE_SIZE, 10));
+    
+      // Targets
+      const listRow       = document.querySelector('#latest-posts .col-lg-12 > .row');
+      const paginationBox = document.querySelector('#pagination-3 .container .d-flex');
+    
+      // Helpers
+      const esc = (s) => (s == null ? "" : String(s));
+      const fmtDate = (d) => {
+        if (!d) return "";
+        const dt = new Date(d);
+        if (isNaN(dt)) return esc(d); // already formatted from backend
+        const y = dt.getFullYear();
+        const m = String(dt.getMonth() + 1).padStart(2, "0");
+        const day = String(dt.getDate()).padStart(2, "0");
+        return `${y}.${m}.${day}`;
+      };
+      const excerpt = (txt, n = 150) => {
+        const s = esc(txt).replace(/\s+/g, " ").trim();
+        return s.length > n ? s.slice(0, n - 1) + "…" : s;
+      };
+      const detailURL = (id) => `articles-details.html?id=${encodeURIComponent(id)}`;
+    
+      function showAlert(msg, variant = "info") {
+        const container = document.querySelector("#latest-posts .container");
+        if (!container) return;
+        let box = document.getElementById("articles-alert");
+        if (!box) {
+          box = document.createElement("div");
+          box.id = "articles-alert";
+          container.prepend(box);
+        }
+        box.className = `alert alert-${variant}`;
+        box.textContent = msg;
+      }
+    
+      function renderSkeleton(count = 4) {
+        if (!listRow) return;
+        listRow.innerHTML = "";
+        for (let i = 0; i < count; i++) {
+          const col = document.createElement("div");
+          col.className = "col-12";
+          col.innerHTML = `
+            <article class="compact-post h-100 placeholder-wave">
+              <div class="thumb">
+                <div class="placeholder" style="width:100%;aspect-ratio:16/9;"></div>
+              </div>
+              <div class="content">
+                <div class="meta">
+                  <span class="placeholder col-2">&nbsp;</span>
+                  <span class="dot">•</span>
+                  <span class="placeholder col-2">&nbsp;</span>
+                </div>
+                <h4 class="title placeholder col-6">&nbsp;</h4>
+                <p class="placeholder col-12">&nbsp;</p>
+              </div>
+            </article>`;
+          listRow.appendChild(col);
+        }
+      }
+    
+      function renderList(items) {
+        if (!listRow) return;
+        listRow.innerHTML = "";
+    
+        if (!Array.isArray(items) || items.length === 0) {
+          listRow.innerHTML = `<div class="col-12"><div class="alert alert-secondary">目前沒有可顯示的文章。</div></div>`;
+          return;
+        }
+    
+        items.forEach((it, idx) => {
+          // === exact mapping to your schema ===
+          const id        = it.id;
+          const title     = it.title || "(未命名)";
+          const dateStr   = fmtDate(it.date);           // DATE column
+          const body      = it.content || "";           // TEXT column
+          const cover     = it.image_url || "https://placehold.co/800x450?text=No+Image";
+    
+          const col = document.createElement("div");
+          col.className = "col-12";
+          col.setAttribute("data-aos", "fade-left");
+          col.setAttribute("data-aos-delay", String(150 + 50 * (idx % 4)));
+    
+          col.innerHTML = `
+            <article class="compact-post h-100">
+              <div class="thumb">
+                <img src="${esc(cover)}" class="img-fluid" alt="Post thumbnail" loading="lazy">
+              </div>
+              <div class="content">
+                <div class="meta">
+                  <span class="date">${esc(dateStr)}</span>
+                  <span class="dot">•</span>
+                  <span class="category">最新花絮</span>
+                </div>
+                <h4 class="title">${esc(title)}</h4>
+                <p>${esc(excerpt(body, 160))}</p>
+                <a href="${detailURL(id)}" class="readmore">
+                  <span>閱讀更多</span><i class="bi bi-arrow-right"></i>
+                </a>
+              </div>
+            </article>`;
+          listRow.appendChild(col);
+        });
+      }
+    
+      function renderPagination({ page, totalPages }) {
+        if (!paginationBox) return;
+        const ul = document.createElement("ul");
+    
+        const addLink = (label, p, active = false, disabled = false) => {
+          const li = document.createElement("li");
+          const a = document.createElement("a");
+          a.href = disabled ? "#" : `?page=${p}&limit=${LIMIT}`;
+          if (active) a.className = "active";
+          a.innerHTML = label;
+          if (disabled) a.setAttribute("aria-disabled", "true");
+          li.appendChild(a);
+          ul.appendChild(li);
+        };
+    
+        addLink('<i class="bi bi-chevron-left"></i>', Math.max(1, page - 1), false, page === 1);
+    
+        const windowSize = 5;
+        let start = Math.max(1, page - Math.floor(windowSize / 2));
+        let end   = Math.min(totalPages, start + windowSize - 1);
+        if (end - start + 1 < windowSize) start = Math.max(1, end - windowSize + 1);
+    
+        if (start > 1) addLink("1", 1);
+        if (start > 2) { const dot = document.createElement("li"); dot.textContent = "..."; ul.appendChild(dot); }
+    
+        for (let p = start; p <= end; p++) addLink(String(p), p, p === page);
+    
+        if (end < totalPages - 1) { const dot = document.createElement("li"); dot.textContent = "..."; ul.appendChild(dot); }
+        if (end < totalPages) addLink(String(totalPages), totalPages);
+    
+        addLink('<i class="bi bi-chevron-right"></i>', Math.min(totalPages, page + 1), false, page === totalPages);
+    
+        paginationBox.innerHTML = "";
+        paginationBox.appendChild(ul);
+      }
+    
+      // ---- Data loaders ----
+    
+      // Server pagination (recommended):
+      // GET /api/results?page=1&limit=8
+      // { items:[...], total:123, page:1, pages:16 }
+      async function fetchServerPage() {
+        const url = new URL(`${API_BASE}/api/${RESOURCE}`, location.origin);
+        url.searchParams.set("page", String(PAGE));
+        url.searchParams.set("limit", String(LIMIT));
+    
+        const res = await fetch(url.toString(), { credentials: "same-origin" });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+    
+        if (data && Array.isArray(data.items) && (data.pages || data.total)) {
+          return {
+            items: data.items,
+            page: Number(data.page ?? PAGE),
+            total: Number(data.total ?? data.items.length),
+            totalPages: Number(data.pages ?? Math.ceil((data.total || 0) / LIMIT)) || 1,
+          };
+        }
+    
+        // Fallback: body is plain array, use X-Total-Count header if present
+        const items = Array.isArray(data) ? data : [];
+        const totalHeader = Number(res.headers.get("X-Total-Count") || items.length || 0);
+        const totalPages = Math.max(1, Math.ceil(totalHeader / LIMIT));
+        return { items, page: PAGE, total: totalHeader, totalPages };
+      }
+    
+      // No server pagination → client-side slice
+      async function fetchAllThenSlice() {
+        const res = await fetch(`${API_BASE}/api/${RESOURCE}`, { credentials: "same-origin" });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const all = await res.json();
+        const total = Array.isArray(all) ? all.length : 0;
+        const start = (PAGE - 1) * LIMIT;
+        const pageItems = (Array.isArray(all) ? all : []).slice(start, start + LIMIT);
+        return { items: pageItems, page: PAGE, total, totalPages: Math.max(1, Math.ceil(total / LIMIT)) };
+      }
+    
+      (async function init() {
+        renderSkeleton(4);
+        showAlert("載入中…", "info");
+        try {
+          let payload = await fetchServerPage();
+    
+          // If server ignored page/limit, fall back to client-side paging
+          if (payload.total > LIMIT && payload.totalPages <= 1 && payload.items.length === payload.total) {
+            payload = await fetchAllThenSlice();
+          }
+    
+          renderList(payload.items);
+          renderPagination({ page: payload.page, totalPages: payload.totalPages });
+          showAlert("載入完成", "success");
+          setTimeout(() => document.getElementById("articles-alert")?.remove(), 1200);
+        } catch (err) {
+          console.error(err);
+          showAlert("載入文章列表失敗，請稍後再試。", "danger");
+          if (listRow) listRow.innerHTML = "";
+        }
+      })();
+    })();
+    </script>
+    
 
 </body>
 

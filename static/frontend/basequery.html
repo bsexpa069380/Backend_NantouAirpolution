@@ -158,6 +158,9 @@
         <!-- 手機可水平 + 垂直捲動 -->
         <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
           <table class="table zebra table-hover align-middle mb-0 w-100 w-sm-100" style="min-width: 700px;">
+            <tbody id="bases-tbody">
+              <!-- rows will be injected here -->
+            </tbody>
             <thead class="table-primary sticky-top text-center" style="height: 60px; vertical-align:middle;">
               <tr>
                 <th scope="col">年度</th>
@@ -169,7 +172,7 @@
               </tr>
             </thead>
             <tbody>
-              <tr class="clickable-row" data-href="base-details.html">
+              <!-- <tr class="clickable-row" data-href="base-details.html">
                 <td>114</td>
                 <td>信義鄉</td>
                 <td>空氣品質淨化</td>
@@ -201,7 +204,7 @@
                 <td>嘉興國民小學</td>
                 <td>詳細資料➜</td>
               </tr>
-              
+               -->
 
             </tbody>
 
@@ -266,9 +269,9 @@
               <div class="col-6 col-md-4">
                 <h5>基地介紹</h5>
                 <ul class="list-unstyled">
-                  <li><a href="basequery.html">空氣品質淨化區</a></li>
-                  <li><a href="basequery.html">清淨綠牆</a></li>
-                  <li><a href="basequery.html">綠美化</a></li>
+                  <li><a href="basequery.html?type=air">空氣品質淨化區</a></li>
+                  <li><a href="basequery.html?type=wall">清淨綠牆</a></li>
+                  <li><a href="basequery.html?type=green">綠美化</a></li>
                 </ul>
               </div>
               <div class="col-6 col-md-4">
@@ -330,9 +333,198 @@
 </html>
 
 <script>
+
+document.addEventListener("DOMContentLoaded", () => {
+  const params = new URLSearchParams(location.search);
+  const type = params.get("type"); // ex: air | wall | green
+  const select = document.getElementById("air-type");
+
+  // Simple mapping
+  const map = {
+    air: "空氣品質淨化",
+    wall: "清淨綠牆",
+    green: "綠美化"
+  };
+
+  if (type && select && map[type]) {
+    // find the matching <option> by text
+    [...select.options].forEach(opt => {
+      if (opt.textContent.includes(map[type])) {
+        select.value = opt.value;
+      }
+    });
+
+    // trigger change event so your existing script runs
+    select.dispatchEvent(new Event("change"));
+  }
+});
   document.querySelectorAll(".clickable-row").forEach(row => {
     row.addEventListener("click", () => {
       window.location.href = row.dataset.href;
     });
   });
+  (() => {
+  // -----------------------------
+  // Helpers
+  // -----------------------------
+  const $ = (sel, ctx=document) => ctx.querySelector(sel);
+  const $$ = (sel, ctx=document) => Array.from(ctx.querySelectorAll(sel));
+
+  // Try to get a specific tbody if you add id="results-body", else fallback to first table
+  const resultsBody = document.getElementById('results-body') || $('.table tbody');
+
+  // Read the SELECT's display text (your <option> values are 1/2/3 etc., so use text)
+  function getSelectedText(selectId) {
+    const el = document.getElementById(selectId);
+    if (!el) return '';
+    const opt = el.options[el.selectedIndex];
+    return (opt && opt.textContent.trim()) || '';
+  }
+
+  // Map dropdown text → API base
+  function getApiBaseByType(typeText) {
+    if (typeText.includes('清淨綠牆') || typeText.includes('空氣綠牆')) return '/api/green_walls';
+    if (typeText.includes('綠美化')) return '/api/greenifications';
+    // default to 空氣品質淨化區
+    return '/api/purification_zones';
+  }
+
+  // Normalise "年度" text into a year or empty
+  function parseYear(text) {
+    // Accept "2025", "2024", "不分年度"
+    const y = text.replace(/[^\d]/g, '');
+    return /^\d{4}$/.test(y) ? y : '';
+  }
+
+  // Build query string with only provided params
+  function buildQuery(params) {
+    const usp = new URLSearchParams();
+    Object.entries(params).forEach(([k, v]) => {
+      if (v !== undefined && v !== null && String(v).trim() !== '') usp.set(k, v);
+    });
+    const s = usp.toString();
+    return s ? `?${s}` : '';
+  }
+
+  // Safely pick first existing property from a list of candidates
+  function pick(obj, ...keys) {
+    for (const k of keys) {
+      if (obj && obj[k] !== undefined && obj[k] !== null && obj[k] !== '') return obj[k];
+    }
+    return '';
+  }
+
+  // Render one row
+  function renderRow(rec, categoryLabel, detailsHrefBase='base-details.html') {
+    const id         = pick(rec, 'id');
+    const year       = pick(rec, 'year', 'budget_year', 'project_year') || '—';
+    const district   = pick(rec, 'district', 'township', 'area') || '—';
+    const name       = pick(rec, 'name', 'project_name', 'site_name', 'title') || '—';
+    const maintainer = pick(rec, 'maintainer', 'maintenance_unit', 'owner_unit') || '—';
+
+    // Include type in details URL so the next page can hit the right API
+    const typeParam = encodeURIComponent(categoryLabel);
+    const href = `${detailsHrefBase}?type=${typeParam}&id=${encodeURIComponent(id)}`;
+
+    const tr = document.createElement('tr');
+    tr.className = 'clickable-row';
+    tr.dataset.href = href;
+    tr.innerHTML = `
+      <td>${year}</td>
+      <td>${district}</td>
+      <td>${categoryLabel}</td>
+      <td>${escapeHtml(name)}</td>
+      <td>${escapeHtml(maintainer)}</td>
+      <td>詳細資料➜</td>
+    `;
+    // click-to-navigate
+    tr.addEventListener('click', () => { window.location.href = href; });
+    return tr;
+  }
+
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, m => (
+      { '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[m]
+    ));
+  }
+
+  // Row states
+  function showLoading() {
+    if (!resultsBody) return;
+    resultsBody.innerHTML = `
+      <tr><td colspan="6" style="text-align:center; padding:24px;">載入中⋯⋯</td></tr>
+    `;
+  }
+  function showEmpty() {
+    if (!resultsBody) return;
+    resultsBody.innerHTML = `
+      <tr><td colspan="6" style="text-align:center; padding:24px;">沒有符合條件的資料</td></tr>
+    `;
+  }
+  function showError(msg) {
+    if (!resultsBody) return;
+    resultsBody.innerHTML = `
+      <tr><td colspan="6" style="text-align:center; padding:24px; color:#b00020;">載入失敗：${escapeHtml(msg || 'Unknown error')}</td></tr>
+    `;
+  }
+
+  // Avoid race conditions when users click quickly
+  let currentAbort = null;
+
+  async function loadAndRender() {
+    const typeText     = getSelectedText('air-type') || '空氣品質淨化';
+    const yearText     = getSelectedText('air-year') || '';
+    const districtText = getSelectedText('air-zone') || '';
+
+    const apiBase = getApiBaseByType(typeText);
+    const year = parseYear(yearText);
+    const district = districtText.includes('不分') ? '' : districtText;
+
+    const qs = buildQuery({ year, district });
+    const url = `${apiBase}${qs}`;
+
+    // cancel previous
+    if (currentAbort) currentAbort.abort();
+    currentAbort = new AbortController();
+    const { signal } = currentAbort;
+
+    try {
+      showLoading();
+      const res = await fetch(url, { signal });
+      if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
+      const data = await res.json();
+
+      const arr = Array.isArray(data) ? data : [];
+      if (!arr.length) { showEmpty(); return; }
+
+      // Fill table
+      resultsBody.innerHTML = '';
+      for (const rec of arr) {
+        resultsBody.appendChild(renderRow(rec, typeText));
+      }
+    } catch (err) {
+      if (err.name === 'AbortError') return; // silently ignore aborted request
+      showError(err.message);
+      console.error('Fetch failed:', err);
+    }
+  }
+
+  // -----------------------------
+  // Wire up UI
+  // -----------------------------
+  const btn = document.querySelector('button.btn.btn-dark.btn-lg[type="submit"]');
+  if (btn) btn.addEventListener('click', (e) => {
+    e.preventDefault();
+    loadAndRender();
+  });
+
+  // Also react to dropdown changes for instant feedback
+  ['air-year','air-type','air-zone'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener('change', loadAndRender);
+  });
+
+  // Initial load
+  document.addEventListener('DOMContentLoaded', loadAndRender);
+})();
 </script>
