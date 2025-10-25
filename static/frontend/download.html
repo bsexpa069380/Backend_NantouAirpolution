@@ -248,6 +248,165 @@
 
   <!-- Main JS File -->
   <script src="assets/js/main.js"></script>
+  <script>
+    (() => {
+      // ===== CONFIG =====
+      const API_BASE = "";         // same-origin; set to "http://127.0.0.1:5000" if API runs elsewhere
+      const RESOURCE = "file";     // /api/file  (list), /api/file/:id (single)
+      const DEFAULT_PAGE_SIZE = 10;
+    
+      // Read ?page & ?limit (1-based)
+      const urlp  = new URLSearchParams(location.search);
+      const PAGE  = Math.max(1, parseInt(urlp.get("page")  || "1", 10));
+      const LIMIT = Math.max(1, parseInt(urlp.get("limit") || DEFAULT_PAGE_SIZE, 10));
+    
+      // Targets
+      const tbody      = document.querySelector(".table tbody");
+      const pagerWrap  = document.querySelector('#pagination-2 .container .d-flex');
+    
+      // Helpers
+      const esc = (s) => (s == null ? "" : String(s));
+      const fmtDate = (d) => {
+        if (!d) return "";
+        const dt = new Date(d);
+        if (isNaN(dt)) return esc(d); // backend may already format
+        const y = dt.getFullYear();
+        const m = String(dt.getMonth() + 1).padStart(2, "0");
+        const day = String(dt.getDate()).padStart(2, "0");
+        return `${y}.${m}.${day}`;
+      };
+    
+      function showAlert(msg, variant="info") {
+        const container = document.querySelector(".container.my-4") || document.body;
+        let box = document.getElementById("download-alert");
+        if (!box) {
+          box = document.createElement("div");
+          box.id = "download-alert";
+          container.prepend(box);
+        }
+        box.className = `alert alert-${variant} mt-3`;
+        box.textContent = msg;
+      }
+    
+      function renderSkeleton(rows = 6) {
+        if (!tbody) return;
+        tbody.innerHTML = "";
+        for (let i = 0; i < rows; i++) {
+          const tr = document.createElement("tr");
+          tr.innerHTML = `
+            <td class="placeholder-glow"><span class="placeholder col-4">&nbsp;</span></td>
+            <td class="placeholder-glow"><span class="placeholder col-8">&nbsp;</span></td>
+            <td class="placeholder-glow"><span class="placeholder col-5">&nbsp;</span></td>
+            <td class="placeholder-glow"><span class="placeholder col-9">&nbsp;</span></td>
+            <td class="placeholder-glow"><span class="placeholder col-6">&nbsp;</span></td>
+          `;
+          tbody.appendChild(tr);
+        }
+      }
+    
+      function renderRows(items) {
+        if (!tbody) return;
+        tbody.innerHTML = "";
+    
+        if (!Array.isArray(items) || items.length === 0) {
+          const tr = document.createElement("tr");
+          tr.innerHTML = `<td colspan="5"><div class="alert alert-secondary mb-0">目前沒有可下載的檔案。</div></td>`;
+          tbody.appendChild(tr);
+          return;
+        }
+    
+        items.forEach((it) => {
+          const id    = it.id;
+          const title = it.title || "(未命名)";
+          const date  = fmtDate(it.date);
+          const note  = it.note || "";
+          const url   = it.file_url || "";
+    
+          const tr = document.createElement("tr");
+    
+          const dlHtml = url
+            ? `<a href="${esc(url)}" download target="_blank" rel="noopener">
+                 點擊下載 <i class="bi bi-download"></i>
+               </a>`
+            : `<span class="text-muted" title="無檔案可下載">無檔案</span>`;
+    
+          tr.innerHTML = `
+            <td>${esc(id)}</td>
+            <td class="text-start">${esc(title)}</td>
+            <td>${esc(date)}</td>
+            <td class="text-start">${esc(note)}</td>
+            <td>${dlHtml}</td>
+          `;
+          tbody.appendChild(tr);
+        });
+      }
+    
+      function renderPagination({ page, totalPages }) {
+        if (!pagerWrap) return;
+        const ul = document.createElement("ul");
+    
+        const addLink = (label, p, active=false, disabled=false) => {
+          const li = document.createElement("li");
+          const a  = document.createElement("a");
+          a.href = disabled ? "#" : `?page=${p}&limit=${LIMIT}`;
+          if (active) a.className = "active";
+          a.innerHTML = label;
+          if (disabled) a.setAttribute("aria-disabled", "true");
+          li.appendChild(a);
+          ul.appendChild(li);
+        };
+    
+        addLink('<i class="bi bi-chevron-left"></i>', Math.max(1, page - 1), false, page === 1);
+    
+        const windowSize = 5;
+        let start = Math.max(1, page - Math.floor(windowSize / 2));
+        let end   = Math.min(totalPages, start + windowSize - 1);
+        if (end - start + 1 < windowSize) start = Math.max(1, end - windowSize + 1);
+    
+        if (start > 1) addLink("1", 1);
+        if (start > 2) { const dot = document.createElement("li"); dot.textContent = "..."; ul.appendChild(dot); }
+    
+        for (let p = start; p <= end; p++) addLink(String(p), p, p === page);
+    
+        if (end < totalPages - 1) { const dot = document.createElement("li"); dot.textContent = "..."; ul.appendChild(dot); }
+        if (end < totalPages) addLink(String(totalPages), totalPages);
+    
+        addLink('<i class="bi bi-chevron-right"></i>', Math.min(totalPages, page + 1), false, page === totalPages);
+    
+        pagerWrap.innerHTML = "";
+        pagerWrap.appendChild(ul);
+      }
+    
+      // Data loader: server currently returns full array; do client-side paging
+      async function fetchAllThenSlice() {
+        const res = await fetch(`${API_BASE}/api/${RESOURCE}`, { credentials: "same-origin" });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const all = await res.json(); // expecting array: {id,title,date,note,file_url}
+        const total = Array.isArray(all) ? all.length : 0;
+        const start = (PAGE - 1) * LIMIT;
+        const pageItems = (Array.isArray(all) ? all : []).slice(start, start + LIMIT);
+        return { items: pageItems, page: PAGE, total, totalPages: Math.max(1, Math.ceil(total / LIMIT)) };
+      }
+    
+      (async function init() {
+        renderSkeleton(8);
+        showAlert("載入中…", "info");
+        try {
+          const payload = await fetchAllThenSlice();
+          renderRows(payload.items);
+          renderPagination({ page: payload.page, totalPages: payload.totalPages });
+          showAlert("載入完成", "success");
+          setTimeout(() => document.getElementById("download-alert")?.remove(), 1200);
+        } catch (err) {
+          console.error(err);
+          showAlert("載入清單失敗，請稍後再試。", "danger");
+          if (tbody) tbody.innerHTML = "";
+        }
+      })();
+    })();
+    </script>
+    
+
 
 </body>
 
