@@ -220,7 +220,108 @@
 
   <!-- Main JS File -->
   <script src="assets/js/main.js"></script>
-
+  <script>
+    (() => {
+      const API_BASE = "";  // same origin; change to "http://127.0.0.1:5000" if needed
+      const RESOURCE = "tree_intros";  // API path
+      const qp = new URLSearchParams(location.search);
+      const id = Number(qp.get("id"));
+    
+      // DOM targets
+      const imgEl   = document.querySelector('#starter-section img.img-limit');
+      const titleEl = document.querySelector('#starter-section h2');
+      const infoBox = document.querySelectorAll('#starter-section .container')[1]; // brief info section
+      const detailBox = document.querySelectorAll('#starter-section .container')[2]; // details section
+      const crumbs = document.querySelectorAll(".breadcrumbs .current");
+    
+      function showAlert(msg, variant = "info") {
+        const host = document.querySelector("#starter-section .container") || document.body;
+        let box = document.getElementById("species-alert");
+        if (!box) {
+          box = document.createElement("div");
+          box.id = "species-alert";
+          host.prepend(box);
+        }
+        box.className = `alert alert-${variant} mt-3`;
+        box.textContent = msg;
+      }
+    
+      const esc = (s) => (s == null ? "" : String(s));
+      const br = (text) => esc(text).replace(/\r\n|\r|\n/g, "<br>");
+    
+      if (!id) {
+        showAlert("缺少 URL 參數：?id=（例如 ?id=1）", "danger");
+        return;
+      }
+    
+      (async function init() {
+        showAlert("載入中…", "info");
+        try {
+          const res = await fetch(`${API_BASE}/api/${RESOURCE}/${id}`, { credentials: "same-origin" });
+          if (!res.ok) throw new Error(`HTTP ${res.status}`);
+          const data = await res.json();
+    
+          // Map schema directly
+          const title   = data.title || "(未命名)";
+          const sciName = data.scientific_name || "";
+          const phenology = data.plant_phenology || "";
+          const features  = data.features || "";
+          const distribution = data.natural_distribution || "";
+          const usage = data.usage || "";
+          const imageUrl = data.image_url || "";
+    
+          // Set title
+          if (titleEl) titleEl.textContent = title;
+          document.title = `${title}｜樹種介紹｜南投環保局空氣品質淨化區資訊網`;
+    
+          // Image
+          if (imgEl) {
+            if (imageUrl) {
+              imgEl.src = imageUrl;
+              imgEl.alt = title;
+              imgEl.classList.remove("d-none");
+            } else {
+              imgEl.classList.add("d-none");
+            }
+          }
+    
+          // Brief info block
+          if (infoBox) {
+            infoBox.innerHTML = `
+              <h4>樹種介紹</h4><br>
+              <p>樹種名：<span>${esc(title)}</span></p>
+              <p>樹種學名：<span>${esc(sciName)}</span></p>
+            `;
+          }
+    
+          // Detailed section
+          if (detailBox) {
+            let html = "";
+            if (distribution)
+              html += `<p>一.天然分布<br><span>${br(distribution)}</span></p>`;
+            if (features)
+              html += `<p>二.型態特徵<br><span>${br(features)}</span></p>`;
+            if (phenology)
+              html += `<p>三.物候資訊<br><span>${br(phenology)}</span></p>`;
+            if (usage)
+              html += `<p>四.其他用途<br><span>${br(usage)}</span></p>`;
+    
+            detailBox.innerHTML = html || `<div class="alert alert-secondary">尚無更多資料。</div>`;
+          }
+    
+          // Breadcrumb
+          if (crumbs.length) crumbs[crumbs.length - 1].textContent = title;
+    
+          showAlert("載入完成", "success");
+          setTimeout(() => document.getElementById("species-alert")?.remove(), 1200);
+        } catch (err) {
+          console.error(err);
+          showAlert("載入樹種內容失敗，請稍後再試。", "danger");
+        }
+      })();
+    })();
+    </script>
+    
 </body>
 
 </html>

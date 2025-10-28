@@ -224,7 +224,117 @@
 
   <!-- Main JS File -->
   <script src="assets/js/main.js"></script>
-
+  <script>
+    (() => {
+      // ====== CONFIG (matches your Flask routes) ======
+      const API_BASE = "";        // same-origin; set to "http://127.0.0.1:5000" if API runs elsewhere
+      const RESOURCE = "result";  // /api/result/<id>
+    
+      // ====== Grab ?id from URL ======
+      const qp = new URLSearchParams(location.search);
+      const id = Number(qp.get("id"));
+    
+      // ====== Selectors for your existing DOM ======
+      const titleEl   = document.querySelector(".section-title h2");                      // article title
+      const coverEl   = document.querySelector(".section-title img");                     // article cover image
+      const bodyEl    = document.querySelector(".section-title p");                       // main content paragraph (under image)
+      const dateBox   = document.querySelector('#starter-section .container[data-aos="fade-up"] p'); // the date line container
+      const crumbs    = document.querySelectorAll(".breadcrumbs .current");               // breadcrumb items
+    
+      // ====== Small helpers ======
+      function showAlert(msg, variant="info") {
+        const container = document.querySelector("#starter-section .container") || document.body;
+        let box = document.getElementById("detail-alert");
+        if (!box) {
+          box = document.createElement("div");
+          box.id = "detail-alert";
+          box.className = `alert alert-${variant} mt-3`;
+          container.prepend(box);
+        } else {
+          box.className = `alert alert-${variant} mt-3`;
+        }
+        box.textContent = msg;
+      }
+    
+      const esc = (s) => (s == null ? "" : String(s));
+    
+      const fmtDate = (d) => {
+        if (!d) return "";
+        const dt = new Date(d);
+        if (isNaN(dt)) return esc(d); // backend already formatted? just show it
+        const y = dt.getFullYear();
+        const m = String(dt.getMonth() + 1).padStart(2, "0");
+        const day = String(dt.getDate()).padStart(2, "0");
+        return `${y}-${m}-${day}`;
+      };
+    
+      // Safely render plain text with line breaks preserved
+      function setTextWithBreaks(el, text) {
+        if (!el) return;
+        const safe = esc(text).replace(/\r\n|\r|\n/g, "<br>");
+        el.innerHTML = safe;
+      }
+    
+      if (!id) {
+        showAlert("缺少 URL 參數：?id=（例如 ?id=1）", "danger");
+        return;
+      }
+    
+      // ====== Load and render ======
+      (async function init() {
+        showAlert("載入中…", "info");
+        try {
+          const res = await fetch(`${API_BASE}/api/${RESOURCE}/${id}`, { credentials: "same-origin" });
+          if (!res.ok) throw new Error(`HTTP ${res.status}`);
+          const data = await res.json();
+    
+          // Expected keys from your schema: id, title, date, content, image_url
+          const title   = data.title || "(未命名)";
+          const dateStr = fmtDate(data.date);
+          const cover   = data.image_url || "";
+          const body    = data.content || "";
+    
+          // Title
+          if (titleEl) titleEl.textContent = title;
+          document.title = `${title}｜南投環保局空氣品質淨化區資訊網`;
+    
+          // Image
+          if (coverEl) {
+            if (cover) {
+              coverEl.src = cover;
+              coverEl.alt = title;
+              coverEl.classList.remove("d-none");
+            } else {
+              // Hide image if none
+              coverEl.classList.add("d-none");
+            }
+          }
+    
+          // Content (preserve line breaks)
+          setTextWithBreaks(bodyEl, body);
+    
+          // Date line
+          if (dateBox) {
+            dateBox.textContent = dateStr ? `${dateStr}` : "";
+          }
+    
+          // Breadcrumb last item becomes the article title
+          if (crumbs && crumbs.length) {
+            crumbs[crumbs.length - 1].textContent = "文章內容";
+            // optional: set the previous breadcrumb text to the title (if you prefer)
+            // crumbs[crumbs.length - 2]?.querySelector('a')?.textContent = title;
+          }
+    
+          showAlert("載入完成", "success");
+          setTimeout(() => document.getElementById("detail-alert")?.remove(), 1200);
+        } catch (err) {
+          console.error(err);
+          showAlert("載入文章內容失敗，請稍後再試。", "danger");
+        }
+      })();
+    })();
+    </script>
+    
 </body>
 
 </html>
