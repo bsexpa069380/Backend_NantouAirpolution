@@ -997,7 +997,7 @@ def update_tree_intro(id):
                 plant_phenology = %s,
                 features = %s,
                 natural_distribution = %s,
-                usage, = %s,
+                usage = %s,
                 image_url = COALESCE(%s, image_url)
             WHERE id = %s
             RETURNING *;
@@ -1440,6 +1440,51 @@ def get_summary():
         "area": a,
         "length": l
     })
+
+    ### --------------------------------- HIDE & SHOW SECTION -------------------------------------------##
+
+ALLOWED_KEYS = {'purification', 'green_wall', 'greenification'}
+
+@app.get("/api/site/sections")
+def api_get_sections():
+    conn = get_db_connection()
+    cur = conn.cursor(cursor_factory=RealDictCursor)
+    try:
+        cur.execute("SELECT key, label, is_visible FROM site_sections ORDER BY label;")
+        return jsonify(cur.fetchall()), 200
+    finally:
+        cur.close(); conn.close()
+
+@app.patch("/api/site/sections/<key>")
+def api_patch_section(key):
+    if key not in ALLOWED_KEYS:
+        return jsonify({"error": "invalid key"}), 400
+
+    payload = request.get_json(silent=True) or {}
+    if "is_visible" not in payload:
+        return jsonify({"error": "missing is_visible"}), 400
+
+    is_visible = bool(payload["is_visible"])
+
+    conn = get_db_connection()
+    cur = conn.cursor(cursor_factory=RealDictCursor)
+    try:
+        cur.execute("""
+          UPDATE site_sections
+             SET is_visible = %s
+           WHERE key = %s
+       RETURNING key, label, is_visible;
+        """, (is_visible, key))
+        row = cur.fetchone()
+        conn.commit()
+        if not row:
+            return jsonify({"error": "not found"}), 404
+        return jsonify(row), 200
+    finally:
+        cur.close(); conn.close()
+
+
+
 # @app.route("/api/areas/total", methods=["GET"])
 # def get_total_area():
 #     conn = get_db_connection()   # however you get your psycopg2 connection
