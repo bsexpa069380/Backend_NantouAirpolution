@@ -45,31 +45,8 @@
         <!-- <img src="assets/img/logo.webp" alt=""> -->
         <h1 class="sitename"><img src="assets/img/logo.png" alt="Blog Hero Image"></h1>
       </a>
-
       <nav id="navmenu" class="navmenu">
-        <ul>
-          <li class="dropdown"><a href="#" class="active"><span>基地介紹</span> <i class="bi bi-chevron-down toggle-dropdown"></i></a>
-            <ul>
-              <li><a href="basequery.html">空氣品質淨化區</a></li>
-              <li><a href="basequery.html">清淨綠牆</a></li>
-              <li><a href="basequery.html">綠美化</a></li>
-
-
-              <!-- <li class="dropdown"><a href="#"><span>基地介紹</span> <i class="bi bi-chevron-down toggle-dropdown"></i></a>
-                <ul>
-                  <li><a href="#">空品淨化區</a></li>
-                  <li><a href="#">綠美化</a></li>
-                  <li><a href="#">空氣綠牆</a></li>
-                </ul>
-              </li> -->
-            </ul>
-          </li>
-          <li><a href="articles.html">最新成果</a></li>
-          <li><a href="species.html" >樹種介紹</a></li>
-          <li><a href="download.html">文件下載</a></li>
-          
-         
-        </ul>
+        <ul id="nav-dynamic"></ul>
         <i class="mobile-nav-toggle d-xl-none bi bi-list"></i>
       </nav>
 
@@ -327,6 +304,61 @@
 
   <!-- Main JS File -->
   <script src="assets/js/main.js"></script>
+  <script>
+    (async () => {
+const API_BASE = ""; // same origin (if Flask runs at same port)
+const ul = document.getElementById("nav-dynamic");
+if (!ul) return;
+
+// 1️⃣ Fetch visible sections
+let sections = [];
+try {
+  const res = await fetch(`${API_BASE}/api/site/sections`, { credentials: "same-origin" });
+  if (res.ok) sections = await res.json();
+} catch (err) {
+  console.error("Failed to load site sections:", err);
+}
+
+// 2️⃣ Build dropdown only for visible ones
+const visible = sections.filter(s => s.is_visible);
+if (visible.length > 0) {
+  const li = document.createElement("li");
+  li.className = "dropdown";
+
+  const dropdownToggle = `
+    <a href="#"><span>基地介紹</span> <i class="bi bi-chevron-down toggle-dropdown"></i></a>
+  `;
+  const subUl = document.createElement("ul");
+
+  visible.forEach(sec => {
+    const label = sec.label;
+    const a = document.createElement("a");
+    a.href = `basequery.html?type=${encodeURIComponent(label)}`;
+    a.textContent = label;
+    const liSub = document.createElement("li");
+    liSub.appendChild(a);
+    subUl.appendChild(liSub);
+  });
+
+  li.innerHTML = dropdownToggle;
+  li.appendChild(subUl);
+  ul.appendChild(li);
+}
+
+// 3️⃣ Append the static parts (always present)
+const staticLinks = [
+  { label: "最新成果", href: "articles.html" },
+  { label: "樹種介紹", href: "species.html" },
+  { label: "文件下載", href: "download.html" },
+];
+
+staticLinks.forEach(item => {
+  const li = document.createElement("li");
+  li.innerHTML = `<a href="${item.href}">${item.label}</a>`;
+  ul.appendChild(li);
+});
+})();
+  </script>
 
 </body>
 

@@ -19,9 +19,24 @@
         <a href="admin_dashboard.html" class="btn btn-outline-dark btn-no-underline">回後台首頁</a>
     </div>
 
-    <div class="mb-3 text-start">
-        <button class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#addModal">新增項目</button>
+    <div class="row">
+  
+      <div class="col-md-6">
+      <div class="mb-3 text-start">
+          <button class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#addModal">新增項目</button>
+      </div>
+      </div>
+  
+      <div class="col-md-6">
+      <div class="form-check form-switch ms-2 " style="display: flex;justify-content: flex-end;">
+    
+    <label class="form-check-label" for="visibilityToggle">顯示綠美化區塊
+      <input class="form-check-input" type="checkbox" id="visibilityToggle" data-key="greenification">
+  
+    
     </div>
+      </div>
+  </div>
 
     <table class="table table-bordered text-center">
         <thead class="table-secondary">
@@ -523,6 +538,52 @@ function showBootstrapToast(message, type = 'success') {
 // 頁面載入時取得資料
 document.addEventListener("DOMContentLoaded", loadData);
 </script>
+<script>
+  (() => {
+    const KEY = "greenification";                 // this toggle controls this section
+    const el  = document.getElementById("visibilityToggle");
+  
+    if (!el) return;
+  
+    // 1) initialize checkbox from server
+    (async () => {
+      try {
+        el.disabled = true;
+        const res = await fetch("/api/site/sections");
+        const sections = await res.json();      // [{key,label,is_visible}, ...]
+        const row = sections.find(s => s.key === KEY);
+        if (row) el.checked = !!row.is_visible;
+      } catch (e) {
+        console.error(e);
+        alert("讀取顯示狀態失敗");
+      } finally {
+        el.disabled = false;
+      }
+    })();
+  
+    // 2) save on change
+    el.addEventListener("change", async () => {
+      const next = el.checked;
+      try {
+        el.disabled = true;
+        const res = await fetch(`/api/site/sections/${KEY}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ is_visible: next })
+        });
+        if (!res.ok) throw new Error("HTTP " + res.status);
+        // optional: show toast
+        // showBootstrapToast(next ? "已顯示空氣淨化區" : "已隱藏空氣淨化區", "success");
+      } catch (e) {
+        console.error(e);
+        el.checked = !next; // revert on error
+        alert("儲存失敗，請稍後再試");
+      } finally {
+        el.disabled = false;
+      }
+    });
+  })();
+  </script>
 <div id="toast-container" class="position-fixed top-0 end-0 p-3" style="z-index: 1100;"></div>
 </body>
 </html>

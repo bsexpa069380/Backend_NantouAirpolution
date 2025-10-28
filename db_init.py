@@ -162,6 +162,17 @@ def db_init():
             section VARCHAR(50) UNIQUE NOT NULL,
             visible BOOLEAN NOT NULL DEFAULT TRUE
         );
+        CREATE TABLE IF NOT EXISTS site_sections (
+            key TEXT PRIMARY KEY,         
+            label TEXT NOT NULL,          
+            is_visible BOOLEAN NOT NULL DEFAULT TRUE
+        );
+
+        INSERT INTO site_sections (key, label, is_visible) VALUES
+        ('purification',  '空氣品質淨化區', TRUE),
+        ('green_wall',    '清淨綠牆',     FALSE),
+        ('greenification','綠美化',       TRUE)
+        ON CONFLICT (key) DO NOTHING;
 
   
         INSERT INTO settings (section, visible) VALUES ('greenifications', TRUE);
