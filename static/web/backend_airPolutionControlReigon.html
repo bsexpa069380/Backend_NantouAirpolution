@@ -15,8 +15,8 @@
 </head>
 <body class="container py-4">
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h4 class="fw-bold">空氣淨化區後台列表</h4>
-        <a href="admin_dashboard.html" class="btn btn-outline-dark btn-no-underline">回後台首頁</a>
+        <h4 class="fw-bold">空氣品質淨化區管理頁面</h4>
+        <a href="admin_dashboard.html" class="btn btn-outline-dark btn-no-underline">回管理首頁</a>
     </div>
 <div class="row">
   
@@ -44,9 +44,11 @@
     <table class="table table-bordered text-center">
         <thead class="table-secondary">
             <tr>
-                <th>基地/計劃名稱</th>
-                <th>編輯</th>
-                <th>刪除</th>
+              <th>序號</th>
+              <th>鄉鎮別</th>
+              <th>基地名稱</th>
+              <th>編輯</th>
+              <th>刪除</th>
             </tr>
         </thead>
         <tbody>
@@ -128,28 +130,6 @@
                 <!-- <label class="form-label">碳匯資料 CO2 總量</label>
                 <input type="text" class="form-control mb-3" id="co2_total" name="co2_total"> -->
               </div>
-              <!-- <div class="col-md-6">
-                <label class="form-label">二氧化碳 CO2</label>
-                <input type="text" class="form-control mb-3" id="co2" name="co2">
-  
-                <label class="form-label">粒狀污染物 TSP</label>
-                <input type="text" class="form-control mb-3" id="tsp" name="tsp">
-  
-                <label class="form-label">二氧化硫 SO2</label>
-                <input type="text" class="form-control mb-3" id="so2" name="so2">
-  
-                <label class="form-label">二氧化氮 NO2</label>
-                <input type="text" class="form-control mb-3" id="no2" name="no2">
-  
-                <label class="form-label">一氧化碳 CO</label>
-                <input type="text" class="form-control mb-3" id="co" name="co">
-  
-                <label class="form-label">臭氧</label>
-                <input type="text" class="form-control mb-3" id="ozone" name="ozone">
-  
-                <label class="form-label">過氧硝酸乙醯酯 PAN</label>
-                <input type="text" class="form-control mb-3" id="pan" name="pan">
-              </div> -->
             </div>
           </form>
         </div>
@@ -184,6 +164,8 @@ async function loadData() {
         row.setAttribute("data-id", item.id);  // ✅ 加上這一行
 
         row.innerHTML = `
+            <td>${item.id}</td>
+            <td>${item.district}</td>
             <td>${item.project_name}</td>
             <td><button class="btn btn-sm btn-warning edit-btn">編輯</button></td>
             <td><button class="btn btn-sm btn-danger delete-btn">刪除</button></td>

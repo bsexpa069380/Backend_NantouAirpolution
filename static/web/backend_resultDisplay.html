@@ -25,7 +25,7 @@
 </head>
 
 <body class="container py-4">
-    <h3 class="mb-4">成果花絮後台</h3>
+    <h3 class="mb-4">成果花絮管理右面</h3>
 
     <div class="d-flex justify-content-between mb-4">
         <button class="btn btn-outline-dark" data-bs-toggle="modal" data-bs-target="#modalForm"> 新增公告 </button>
@@ -35,7 +35,9 @@
     <table class="table table-bordered text-center">
         <thead class="table-dark">
             <tr>
-                <th>標題</th>
+                <th>序號</th>
+                <th>發布日期</th>       
+                <th>活動項目</th>
                 <th>編輯</th>
                 <th>刪除</th>
             </tr>
@@ -100,7 +102,19 @@
       data.forEach(item => {
         const row = document.createElement("tr");
         row.setAttribute("data-id", item.id);
+
+        let formattedDate = "";
+      if (item.date) {
+        const d = new Date(item.date);
+        // format to YYYY/MM/DD
+        const year = d.getFullYear();
+        const month = String(d.getMonth() + 1).padStart(2, "0");
+        const day = String(d.getDate()).padStart(2, "0");
+        formattedDate = `${year}/${month}/${day}`;
+      }
         row.innerHTML = `
+          <td>${item.id || ""}</td>
+          <td>${formattedDate || ""}</td>
           <td>${item.title || ""}</td>
           <td><button class="btn btn-sm btn-edit edit-btn">編輯</button></td>
           <td><button class="btn btn-sm btn-delete delete-btn">刪除</button></td>
@@ -177,19 +191,7 @@
       }
     });
 
-  document.getElementById("addModal").addEventListener("hidden.bs.modal", function () {
-  const form = document.getElementById("airPurifyForm");
-  form.reset();
-  form.removeAttribute("data-editing-id");
-
-  // 如果有圖片預覽也清掉
-  if (typeof previewContainer !== "undefined") {
-    previewContainer.innerHTML = "";
-  }
-  if (typeof imageFiles !== "undefined") {
-    imageFiles = [];
-  }
-});
+    
 
     window.onload = loadData;
     </script>
