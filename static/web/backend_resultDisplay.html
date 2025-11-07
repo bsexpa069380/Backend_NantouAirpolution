@@ -177,6 +177,20 @@
       }
     });
 
+  document.getElementById("addModal").addEventListener("hidden.bs.modal", function () {
+  const form = document.getElementById("airPurifyForm");
+  form.reset();
+  form.removeAttribute("data-editing-id");
+
+  // 如果有圖片預覽也清掉
+  if (typeof previewContainer !== "undefined") {
+    previewContainer.innerHTML = "";
+  }
+  if (typeof imageFiles !== "undefined") {
+    imageFiles = [];
+  }
+});
+
     window.onload = loadData;
     </script>
 </body>
