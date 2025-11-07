@@ -138,6 +138,9 @@ def db_init():
             features TEXT NOT NULL,
             natural_distribution TEXT, 
             usage TEXT, 
+            other_usage TEXT, 
+            breeding_intro TEXT, 
+            source TEXT, 
             image_url TEXT
         );
 

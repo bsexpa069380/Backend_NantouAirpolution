@@ -49,96 +49,104 @@
   </div>
 
   <!-- Modal: Add/Edit -->
-  <div class="modal fade" id="modalForm" tabindex="-1" aria-labelledby="modalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg modal-dialog-scrollable">
-      <div class="modal-content">
-        <form id="treeForm">
-          <div class="modal-header">
-            <h5 class="modal-title" id="modalLabel">新增 / 編輯樹種介紹</h5>
-            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="關閉"></button>
-          </div>
+<div class="modal fade" id="modalForm" tabindex="-1" aria-labelledby="modalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-scrollable">
+    <div class="modal-content">
+      <form id="treeForm">
+        <div class="modal-header sticky-top bg-white">
+          <h5 class="modal-title" id="modalLabel">新增 / 編輯樹種介紹</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="關閉"></button>
+        </div>
 
-          <div class="modal-body">
-            <input type="hidden" id="treeId" name="id" />
+        <div class="modal-body">
+          <input type="hidden" id="treeId" name="id" />
 
-            <div class="row g-3">
-              <div class="col-md-8">
-                <label class="form-label">樹種名（title）</label>
-                <input type="text" class="form-control" id="title" name="title" required />
-              </div>
+          <div class="row g-3">
+            <div class="col-md-8">
+              <label class="form-label">樹種名（title）</label>
+              <input type="text" class="form-control" id="title" name="title" required />
+            </div>
 
-              <div class="col-md-4">
-                <label class="form-label">學名（scientific_name）</label>
-                <input type="text" class="form-control" id="scientific_name" name="scientific_name" required />
-              </div>
+            <div class="col-md-4">
+              <label class="form-label">學名（scientific_name）</label>
+              <input type="text" class="form-control" id="scientific_name" name="scientific_name" required />
+            </div>
 
-              <div class="col-12">
-                <label class="form-label">天然分佈（natural_distribution）</label>
-                <textarea class="form-control" id="natural_distribution" name="natural_distribution" rows="2"></textarea>
-              </div>
+            <div class="col-12">
+              <label class="form-label">天然分佈（natural_distribution）</label>
+              <textarea class="form-control" id="natural_distribution" name="natural_distribution" rows="2"></textarea>
+            </div>
 
-              <div class="col-12">
-                <label class="form-label">形態特徵（features）</label>
-                <textarea class="form-control" id="features" name="features" rows="2" required></textarea>
-              </div>
+            <div class="col-12">
+              <label class="form-label">形態特徵（features）</label>
+              <textarea class="form-control" id="features" name="features" rows="2" required></textarea>
+            </div>
 
-              <div class="col-12">
-                <label class="form-label">物候資訊（plant_phenology）</label>
-                <textarea class="form-control" id="plant_phenology" name="plant_phenology" rows="2" required></textarea>
-              </div>
+            <div class="col-12">
+              <label class="form-label">物候資訊（plant_phenology）</label>
+              <textarea class="form-control" id="plant_phenology" name="plant_phenology" rows="2" required></textarea>
+            </div>
 
-              <div class="col-12">
-                <label class="form-label">景觀用途（usage）</label>
-                <textarea class="form-control" id="usage" name="usage" rows="2"></textarea>
-              </div>
+            <div class="col-12">
+              <label class="form-label">景觀用途（usage）</label>
+              <textarea class="form-control" id="usage" name="usage" rows="2"></textarea>
+            </div>
 
-              <div class="col-12">
-                <label class="form-label">其他用途（other usage）</label>
-                <textarea class="form-control" id="other_usage" name="other_usage" rows="2"></textarea>
-              </div>
+            <div class="col-12">
+              <label class="form-label">其他用途（other usage）</label>
+              <textarea class="form-control" id="other_usage" name="other_usage" rows="2"></textarea>
+            </div>
 
-              <div class="col-12">
-                <label class="form-label">培育或繁殖簡要說明 (breeding intro）</label>
-                <textarea class="form-control" id="breed_intro" name="breed_intro" rows="2"></textarea>
-              </div>
+            <div class="col-12">
+              <label class="form-label">培育或繁殖簡要說明（breeding intro）</label>
+              <textarea class="form-control" id="breeding_intro" name="breeding_intro" rows="2"></textarea>
+            </div>
 
-              <div class="col-12">
-                <label class="form-label">資料來源（source）</label>
-                <textarea class="form-control" id="source" name="source" rows="2"></textarea>
-              </div>
+            <div class="col-12">
+              <label class="form-label">資料來源（source）</label>
+              <textarea class="form-control" id="source" name="source" rows="2"></textarea>
+            </div>
 
-              
+            <div class="col-md-8">
+              <label class="form-label">上傳圖片（image）</label>
+              <input type="file" class="form-control" id="image" name="image" accept="image/*" />
+              <div class="form-text">空白表示沿用既有圖片。</div>
+            </div>
 
-              
-
-              
-
-              <div class="col-md-8">
-                <label class="form-label">上傳圖片（image）</label>
-                <input type="file" class="form-control" id="image" name="image" accept="image/*" />
-                <div class="form-text">空白表示沿用既有圖片。</div>
-              </div>
-
-              <div class="col-md-4 d-flex align-items-end">
-                <div class="w-100">
-                  <div class="mb-1">目前預覽</div>
-                  <img id="imagePreview" class="img-thumb" src="" alt="預覽" />
-                </div>
+            <div class="col-md-4 d-flex align-items-end">
+              <div class="w-100">
+                <div class="mb-1">目前預覽</div>
+                <img id="imagePreview" class="img-thumb" src="" alt="預覽" />
               </div>
             </div>
           </div>
+        </div>
 
-          <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
-            <button type="submit" class="btn btn-primary">
-              <span class="save-text">確認儲存</span>
-              <span class="spinner-border spinner-border-sm ms-2 d-none" role="status" aria-hidden="true"></span>
-            </button>
-          </div>
-        </form>
-      </div>
+        <div class="modal-footer sticky-bottom bg-white">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+          <button type="submit" class="btn btn-primary">
+            <span class="save-text">確認儲存</span>
+            <span class="spinner-border spinner-border-sm ms-2 d-none" role="status" aria-hidden="true"></span>
+          </button>
+        </div>
+      </form>
     </div>
   </div>
+</div>
+
+<!-- Add this CSS -->
+<style>
+  .modal-dialog-scrollable .modal-body {
+    max-height: calc(100vh - 180px);
+    overflow-y: auto;
+  }
+  .modal-header.sticky-top,
+  .modal-footer.sticky-bottom {
+    position: sticky;
+    z-index: 2;
+  }
+</style>
+
 
   <!-- Toast container -->
   <div id="toast-container" class="position-fixed top-0 end-0 p-3" style="z-index: 1100;"></div>
@@ -199,6 +207,9 @@
     const featEl = document.getElementById("features");
     const distEl = document.getElementById("natural_distribution");
     const usageEl= document.getElementById("usage");
+    const other_usageEl= document.getElementById("other_usage");
+    const breeding_introEl= document.getElementById("breeding_intro");
+    const sourceEl= document.getElementById("source");
     const imgEl  = document.getElementById("image");
     const imgPrev= document.getElementById("imagePreview");
 
@@ -280,6 +291,9 @@
           featEl.value        = data.features || "";
           distEl.value        = data.natural_distribution || "";
           usageEl.value       = data.usage || "";
+          other_usageEl.value       = data.other_usage || "";
+          breeding_introEl.value       = data.breeding_intro || "";
+          sourceEl.value       = data.source || "";
           imgEl.value         = "";
           imgPrev.src         = data.image_url || "";
 
@@ -330,6 +344,9 @@
       fd.append("features", featEl.value.trim());
       fd.append("natural_distribution", distEl.value.trim());
       fd.append("usage", usageEl.value.trim());
+      fd.append("other_usage", other_usageEl.value.trim());
+      fd.append("breeding_intro", breeding_introEl.value.trim());
+      fd.append("source", sourceEl.value.trim());
       if (imgEl.files && imgEl.files[0]) {
         fd.append("image", imgEl.files[0]);
       }
