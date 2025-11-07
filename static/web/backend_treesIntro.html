@@ -1,210 +1,379 @@
 <!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>樹種介紹頁面後台列表</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <!-- Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+
   <style>
-    body {
-      padding: 2rem;
-      background-color: #fff;
+    body { background-color: #fff; }
+    .btn-no-underline { text-decoration: none; }
+    .table thead th { vertical-align: middle; }
+    .img-thumb {
+      width: 52px; height: 52px; object-fit: cover; border-radius: .25rem;
+      border: 1px solid #e9ecef;
     }
-    .table thead {
-      background-color: #1d1f21;
-      color: white;
-      text-align: center;
-    }
-    .btn-edit {
-      background-color: #ffc107;
-      color: #000;
-    }
-    .btn-delete {
-      background-color: #dc3545;
-      color: #fff;
-    }
-    .btn-add {
-      background-color: #212529;
-      color: #fff;
-      font-weight: bold;
-    }
+    .empty-row td { color: #6c757d; }
   </style>
 </head>
-<body>
-  <h2>樹種介紹頁面後台列表</h2>
 
-  <div class="mb-3">
-    <button class="btn btn-add" data-bs-toggle="modal" data-bs-target="#modalForm" onclick="openAddModal()">新增樹種資料</button>
+<body class="container py-4">
+  <!-- Header -->
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h4 class="fw-bold m-0">樹種介紹頁面後台列表</h4>
     <a href="admin_dashboard.html" class="btn btn-outline-dark btn-no-underline">回後台首頁</a>
   </div>
 
-  <table class="table table-bordered text-center">
-    <thead>
-      <tr>
-        <th>文章標題</th>
-        <th>編輯</th>
-        <th>刪除</th>
-      </tr>
-    </thead>
-    <tbody id="dataTable"></tbody>
-  </table>
+  <!-- Toolbar -->
+  <div class="mb-3 text-start">
+    <button class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#modalForm" id="btnAdd">新增樹種資料</button>
+  </div>
 
-  <!-- Modal -->
+  <!-- Table -->
+  <div class="table-responsive">
+    <table class="table table-bordered align-middle text-center">
+      <thead class="table-secondary">
+        <tr>
+          <th style="width: 64px;">圖片</th>
+          <th>樹種標題</th>
+          <th style="width: 96px;">編輯</th>
+          <th style="width: 96px;">刪除</th>
+        </tr>
+      </thead>
+      <tbody id="dataTable">
+        <tr class="empty-row"><td colspan="4">載入中…</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Modal: Add/Edit -->
   <div class="modal fade" id="modalForm" tabindex="-1" aria-labelledby="modalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
       <div class="modal-content">
-        <form id="announcementForm">
+        <form id="treeForm">
           <div class="modal-header">
             <h5 class="modal-title" id="modalLabel">新增 / 編輯樹種介紹</h5>
-            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="關閉"></button>
           </div>
+
           <div class="modal-body">
-            <input type="hidden" id="announcementId" name="id">
+            <input type="hidden" id="treeId" name="id" />
 
-            <div class="mb-3">
-              <label for="title" class="form-label">樹種標題</label>
-              <input type="text" class="form-control" id="title" name="title" required>
-            </div>
+            <div class="row g-3">
+              <div class="col-md-8">
+                <label class="form-label">樹種標題（title）</label>
+                <input type="text" class="form-control" id="title" name="title" required />
+              </div>
 
-            <div class="mb-3">
-              <label for="content" class="form-label">學名</label>
-              <input type="content" class="form-control" id="scientific_name" name="scientific_name" required>
-            </div>
+              <div class="col-md-4">
+                <label class="form-label">學名（scientific_name）</label>
+                <input type="text" class="form-control" id="scientific_name" name="scientific_name" required />
+              </div>
 
-            <div class="mb-3">
-              <label for="content" class="form-label">物候</label>
-              <textarea class="form-control" id="plant_phenology" name="plant_phenology" rows="4" required></textarea>
-            </div>
+              <div class="col-12">
+                <label class="form-label">物候（plant_phenology）</label>
+                <textarea class="form-control" id="plant_phenology" name="plant_phenology" rows="2" required></textarea>
+              </div>
 
-            <div class="mb-3">
-              <label for="content" class="form-label">特色</label>
-              <textarea class="form-control" id="features" name="features" rows="2" required></textarea>
-            </div>
+              <div class="col-12">
+                <label class="form-label">特色（features）</label>
+                <textarea class="form-control" id="features" name="features" rows="2" required></textarea>
+              </div>
 
-            <div class="mb-3">
-              <label for="content" class="form-label">天然分佈</label>
-              <textarea class="form-control" id="natural_distribution" name="natural_distribution" rows="2" required></textarea>
-            </div>
+              <div class="col-12">
+                <label class="form-label">天然分佈（natural_distribution）</label>
+                <textarea class="form-control" id="natural_distribution" name="natural_distribution" rows="2"></textarea>
+              </div>
 
-            <div class="mb-3">
-              <label for="content" class="form-label">用途</label>
-              <textarea class="form-control" id="usage" name="usage" rows="2" required></textarea>
-            </div>
+              <div class="col-12">
+                <label class="form-label">用途（usage）</label>
+                <textarea class="form-control" id="usage" name="usage" rows="2"></textarea>
+              </div>
 
-            <div class="mb-3">
-              <label for="image" class="form-label">上傳圖片</label>
-              <input type="file" class="form-control" id="image" name="image">
+              <div class="col-md-8">
+                <label class="form-label">上傳圖片（image）</label>
+                <input type="file" class="form-control" id="image" name="image" accept="image/*" />
+                <div class="form-text">空白表示沿用既有圖片。</div>
+              </div>
+
+              <div class="col-md-4 d-flex align-items-end">
+                <div class="w-100">
+                  <div class="mb-1">目前預覽</div>
+                  <img id="imagePreview" class="img-thumb" src="" alt="預覽" />
+                </div>
+              </div>
             </div>
           </div>
+
           <div class="modal-footer">
             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
-            <button type="submit" class="btn btn-primary">確認儲存</button>
+            <button type="submit" class="btn btn-primary">
+              <span class="save-text">確認儲存</span>
+              <span class="spinner-border spinner-border-sm ms-2 d-none" role="status" aria-hidden="true"></span>
+            </button>
           </div>
         </form>
       </div>
     </div>
   </div>
 
-  <!-- Bootstrap + JavaScript -->
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <!-- Toast container -->
+  <div id="toast-container" class="position-fixed top-0 end-0 p-3" style="z-index: 1100;"></div>
+
+  <!-- Bootstrap JS Bundle -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
   <script>
+    const API_BASE = "/api/tree_intros";
     const token = localStorage.getItem("token");
 
-    async function loadData() {
-      const res = await fetch("/api/tree_intros", {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      const data = await res.json();
-      const tbody = document.getElementById("dataTable");
-      tbody.innerHTML = "";
+    // ========= Toast =========
+    function showBootstrapToast(message, type = "success") {
+      const toastId = `toast-${Date.now()}`;
+      const html = `
+        <div id="${toastId}" class="toast align-items-center text-white bg-${type} border-0" role="alert" aria-live="assertive" aria-atomic="true">
+          <div class="d-flex">
+            <div class="toast-body">${message}</div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+          </div>
+        </div>`;
+      const wrap = document.getElementById("toast-container");
+      wrap.insertAdjacentHTML("beforeend", html);
+      const el = document.getElementById(toastId);
+      const t = new bootstrap.Toast(el, { delay: 2600 });
+      t.show();
+      el.addEventListener("hidden.bs.toast", () => el.remove());
+    }
 
-      data.forEach(item => {
-        const row = document.createElement("tr");
-        row.setAttribute("data-id", item.id);
-        row.innerHTML = `
-          <td>${item.title || ""}</td>
-          <td><button class="btn btn-sm btn-edit edit-btn">編輯</button></td>
-          <td><button class="btn btn-sm btn-delete delete-btn">刪除</button></td>
+    // ========= Helpers =========
+    function setLoading(btn, on) {
+      const spinner = btn.querySelector(".spinner-border");
+      const text = btn.querySelector(".save-text");
+      btn.disabled = on;
+      spinner.classList.toggle("d-none", !on);
+      text.classList.toggle("d-none", on);
+    }
+
+    function filePreview(inputEl, imgEl) {
+      const f = inputEl.files?.[0];
+      if (!f) return;
+      const reader = new FileReader();
+      reader.onload = e => { imgEl.src = e.target.result; };
+      reader.readAsDataURL(f);
+    }
+
+    // ========= DOM refs =========
+    const tbody = document.getElementById("dataTable");
+    const btnAdd = document.getElementById("btnAdd");
+    const modalEl = document.getElementById("modalForm");
+    const modal = new bootstrap.Modal(modalEl);
+    const form = document.getElementById("treeForm");
+
+    const idEl   = document.getElementById("treeId");
+    const titleEl= document.getElementById("title");
+    const sciEl  = document.getElementById("scientific_name");
+    const phenoEl= document.getElementById("plant_phenology");
+    const featEl = document.getElementById("features");
+    const distEl = document.getElementById("natural_distribution");
+    const usageEl= document.getElementById("usage");
+    const imgEl  = document.getElementById("image");
+    const imgPrev= document.getElementById("imagePreview");
+
+    // ========= Load list =========
+    async function loadData() {
+      try {
+        const res = await fetch(API_BASE, {
+          headers: token ? { Authorization: `Bearer ${token}` } : {}
+        });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        renderTable(data);
+      } catch (err) {
+        console.error(err);
+        tbody.innerHTML = `<tr class="empty-row"><td colspan="4">載入失敗，請稍後再試</td></tr>`;
+        showBootstrapToast("載入列表失敗", "danger");
+      }
+    }
+
+    function renderTable(list) {
+      if (!Array.isArray(list) || list.length === 0) {
+        tbody.innerHTML = `<tr class="empty-row"><td colspan="4">目前尚無資料</td></tr>`;
+        return;
+      }
+      tbody.innerHTML = "";
+      list.forEach(item => {
+        const tr = document.createElement("tr");
+        tr.dataset.id = item.id;
+        tr.innerHTML = `
+          <td>${item.image_url ? `<img src="${item.image_url}" class="img-thumb" alt="">` : "-"}</td>
+          <td class="text-start">${item.title ? escapeHtml(item.title) : ""}</td>
+          <td><button class="btn btn-sm btn-warning edit-btn">編輯</button></td>
+          <td><button class="btn btn-sm btn-danger delete-btn">刪除</button></td>
         `;
-        tbody.appendChild(row);
+        tbody.appendChild(tr);
       });
     }
+
+    function escapeHtml(s) {
+      if (s == null) return "";
+      return String(s)
+        .replace(/&/g,"&amp;")
+        .replace(/</g,"&lt;")
+        .replace(/>/g,"&gt;")
+        .replace(/"/g,"&quot;")
+        .replace(/'/g,"&#039;");
+    }
+
+    // ========= Add =========
+    btnAdd.addEventListener("click", () => openAddModal());
 
     function openAddModal() {
-      document.getElementById("announcementId").value = "";
-      document.getElementById("title").value = "";
-      document.getElementById("scientific_name").value = "";
-      document.getElementById("plant_phenology").value = "";
-      document.getElementById("features").value = "";
-      document.getElementById("natural_distribution").value =  "";
-      document.getElementById("usage").value = "";
-      document.getElementById("image").value = "";
+      form.reset();
+      idEl.value = "";
+      imgPrev.src = "";
+      modalEl.querySelector(".modal-title").textContent = "新增樹種介紹";
     }
 
-    document.getElementById("announcementForm").addEventListener("submit", async function (e) {
-      e.preventDefault();
-      const id = document.getElementById("announcementId").value;
-      const formData = new FormData(e.target);
-      const method = id ? "PUT" : "POST";
-      const url = id ? `/api/tree_intros/${id}` : "/api/tree_intros";
-
-      const res = await fetch(url, {
-        method,
-        headers: { Authorization: `Bearer ${token}` },
-        body: formData
-      });
-
-      if (res.ok) {
-        alert("成功儲存！");
-        const modal = bootstrap.Modal.getInstance(document.getElementById("modalForm"));
-        modal.hide();
-        loadData();
-      } else {
-        const err = await res.json();
-        alert("儲存失敗：" + (err.error || "未知錯誤"));
-      }
-    });
-
-    document.getElementById("dataTable").addEventListener("click", async function (e) {
+    // ========= Edit (delegate) =========
+    tbody.addEventListener("click", async (e) => {
       const row = e.target.closest("tr");
-      const id = row.getAttribute("data-id");
+      if (!row) return;
+      const id = row.dataset.id;
 
       // 編輯
       if (e.target.classList.contains("edit-btn")) {
-        const res = await fetch(`/api/tree_intros/${id}`, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        const data = await res.json();
+        try {
+          const res = await fetch(`${API_BASE}/${id}`, {
+            headers: token ? { Authorization: `Bearer ${token}` } : {}
+          });
+          if (!res.ok) throw new Error(`HTTP ${res.status}`);
+          const data = await res.json();
 
-        document.getElementById("announcementId").value = data.id;
-        document.getElementById("title").value = data.title || "";
-        document.getElementById("scientific_name").value = data.scientific_name ||"";
-        document.getElementById("plant_phenology").value = data.plant_phenology ||"";
-        document.getElementById("features").value = data.features ||"";
-        document.getElementById("natural_distribution").value = data.natural_distribution || "";
-        document.getElementById("usage").value = data.usage || "";
-        const modal = new bootstrap.Modal(document.getElementById("modalForm"));
-        modal.show();
+          // 填值
+          idEl.value          = data.id;
+          titleEl.value       = data.title || "";
+          sciEl.value         = data.scientific_name || "";
+          phenoEl.value       = data.plant_phenology || "";
+          featEl.value        = data.features || "";
+          distEl.value        = data.natural_distribution || "";
+          usageEl.value       = data.usage || "";
+          imgEl.value         = "";
+          imgPrev.src         = data.image_url || "";
+
+          modalEl.querySelector(".modal-title").textContent = "編輯樹種介紹";
+          modal.show();
+
+        } catch (err) {
+          console.error(err);
+          showBootstrapToast("取得資料失敗", "danger");
+        }
       }
 
       // 刪除
       if (e.target.classList.contains("delete-btn")) {
-        if (confirm("確定要刪除？")) {
-          const res = await fetch(`/api/tree_intros/${id}`, {
+        const ok = confirm("確定要刪除？");
+        if (!ok) return;
+        try {
+          const res = await fetch(`${API_BASE}/${id}`, {
             method: "DELETE",
-            headers: { Authorization: `Bearer ${token}` }
+            headers: {
+              ...(token ? { Authorization: `Bearer ${token}` } : {})
+            }
           });
-          if (res.ok) {
-            alert("已刪除");
-            loadData();
-          } else {
-            const err = await res.json();
-            alert("刪除失敗：" + (err.error || "未知錯誤"));
+          if (!res.ok) throw new Error(`HTTP ${res.status}`);
+          row.remove();
+          if (!tbody.children.length) {
+            tbody.innerHTML = `<tr class="empty-row"><td colspan="4">目前尚無資料</td></tr>`;
           }
+          showBootstrapToast("已刪除", "success");
+        } catch (err) {
+          console.error(err);
+          showBootstrapToast("刪除失敗", "danger");
         }
       }
     });
 
-    window.onload = loadData;
+    // ========= Submit (Create / Update) =========
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const id = idEl.value.trim();
+      const isEdit = !!id;
+
+      // 用 FormData（支援單檔圖片）
+      const fd = new FormData();
+      fd.append("title", titleEl.value.trim());
+      fd.append("scientific_name", sciEl.value.trim());
+      fd.append("plant_phenology", phenoEl.value.trim());
+      fd.append("features", featEl.value.trim());
+      fd.append("natural_distribution", distEl.value.trim());
+      fd.append("usage", usageEl.value.trim());
+      if (imgEl.files && imgEl.files[0]) {
+        fd.append("image", imgEl.files[0]);
+      }
+
+      const btn = form.querySelector('button[type="submit"]');
+      setLoading(btn, true);
+
+      try {
+        const url = isEdit ? `${API_BASE}/${id}` : API_BASE;
+        const method = isEdit ? "PUT" : "POST";
+        const res = await fetch(url, {
+          method,
+          headers: {
+            ...(token ? { Authorization: `Bearer ${token}` } : {})
+          },
+          body: fd
+        });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+        const saved = await res.json();
+        modal.hide();
+        showBootstrapToast(`${isEdit ? "更新" : "新增"}成功`, "success");
+        upsertRow(saved);
+
+      } catch (err) {
+        console.error(err);
+        showBootstrapToast(`${isEdit ? "更新" : "新增"}失敗`, "danger");
+      } finally {
+        setLoading(btn, false);
+      }
+    });
+
+    // ========= Upsert row into table (no full reload) =========
+    function upsertRow(item) {
+      const exist = tbody.querySelector(`tr[data-id="${item.id}"]`);
+      const html = `
+        <td>${item.image_url ? `<img src="${item.image_url}" class="img-thumb" alt="">` : "-"}</td>
+        <td class="text-start">${item.title ? escapeHtml(item.title) : ""}</td>
+        <td><button class="btn btn-sm btn-warning edit-btn">編輯</button></td>
+        <td><button class="btn btn-sm btn-danger delete-btn">刪除</button></td>
+      `;
+
+      if (exist) {
+        exist.innerHTML = html;
+      } else {
+        if (tbody.querySelector(".empty-row")) tbody.innerHTML = "";
+        const tr = document.createElement("tr");
+        tr.dataset.id = item.id;
+        tr.innerHTML = html;
+        tbody.prepend(tr);
+      }
+    }
+
+    // ========= Modal resets =========
+    modalEl.addEventListener("hidden.bs.modal", () => {
+      form.reset();
+      idEl.value = "";
+      imgPrev.src = "";
+    });
+
+    // ========= Image preview =========
+    imgEl.addEventListener("change", () => filePreview(imgEl, imgPrev));
+
+    // ========= Init =========
+    document.addEventListener("DOMContentLoaded", loadData);
   </script>
 </body>
 </html>
