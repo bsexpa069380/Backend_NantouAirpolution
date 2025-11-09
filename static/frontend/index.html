@@ -296,7 +296,7 @@
                     <div class="vital-signs">
                       <div class="vital-item">
                         <span class="vital-label">總面積</span>
-                        <span class="vital-value" id = green_wall_count>100</span>
+                        <span class="vital-value" id = total_areaSum>100</span>
                         <span class="vital-label">平方<br>公尺</span>
                       </div>
                       
@@ -732,18 +732,23 @@
     if (!res.ok) throw new Error("Failed to fetch summary");
 
     const data = await res.json();
+    
 
     // Map API table names → HTML element IDs
     if (table === "purification_zones") {
       document.getElementById("purfication_count").textContent = data.count;
       document.getElementById("purfication_areaSum").textContent = data.area;
       document.getElementById("purfication_lengthSum").textContent = data.length;
+      
     } else if (table === "green_walls") {
       document.getElementById("green_wall_count").textContent = data.count;
       document.getElementById("green_wall_areaSum").textContent = data.area;
+     
       // if you also want to show length for green walls, add:
       // document.getElementById("green_wall_lengthSum").textContent = data.length;
     }
+    
+
   } catch (err) {
     console.error("Error fetching summary:", err);
   }
@@ -751,6 +756,13 @@
 document.addEventListener("DOMContentLoaded", () => {
   loadSummary("purification_zones"); 
   loadSummary("green_walls"); 
+  const greenWallArea = parseFloat(document.getElementById("green_wall_areaSum").textContent) || 0;
+  const purificationLength = parseFloat(document.getElementById("purfication_lengthSum").textContent) || 0;
+
+  document.getElementById("total_areaSum").textContent = greenWallArea + purificationLength;
+
+
+
 });
 
   })();

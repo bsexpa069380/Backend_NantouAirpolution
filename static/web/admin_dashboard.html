@@ -58,7 +58,7 @@
         <h1>南投縣空氣污染網站 後台首頁</h1>
         <div>
             <a href="/static/frontend/index.html" class="btn btn-exit me-2">網頁端</a>
-            <a href="/logout" class="btn btn-secondary">登出</a>
+            <a href="#" id="logoutBtn" class="btn btn-secondary">登出</a>
         </div>
     </div>
 <h3 style= "display:flex ; justify-content: center;text-align: center;line-height: 2;" > 空氣品質淨化區及空氣清淨綠牆暨綠美化資訊網<br>後台管理首頁</h3>
@@ -74,6 +74,21 @@
         <a class="card-button" href="/static/web/backend_resultDisplay.html">成果花絮頁面</a>
         <a class="card-button" href="/static/web/backend_fileDownload.html">文件下載</a>
     </div>
-
+    <script>
+        document.getElementById("logoutBtn").addEventListener("click", (e) => {
+          e.preventDefault();
+        
+          // ✅ Remove stored token
+          localStorage.removeItem("jwt_token");
+          sessionStorage.removeItem("jwt_token");
+        
+          // (Optional) tell backend user logged out, purely informational
+          fetch("/logout", { method: "POST" }).finally(() => {
+            // ✅ Redirect to login page
+            window.location.href = "/login";
+          });
+        });
+        </script>
 </body>
+
 </html>

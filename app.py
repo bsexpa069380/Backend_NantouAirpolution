@@ -28,7 +28,7 @@ r2_client()
 
 @app.route("/")
 def root():
-    return redirect(url_for("login"))
+    return redirect(url_for("static", filename="frontend/index.html"))
 
 @app.route("/login")
 def login():
@@ -1528,9 +1528,9 @@ def healthz():
     return jsonify(status="ok")
 
 if __name__ == "__main__":
-    db_reset()
-    print("✅ Database reset")
-    db_init()
-    print("✅ Database initialized with admin account")
+    # db_reset()
+    # print("✅ Database reset")
+    # db_init()
+    # print("✅ Database initialized with admin account")
     # print(app.url_map)
     app.run(debug=True, host="0.0.0.0", port=4080)
