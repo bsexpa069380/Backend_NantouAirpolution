@@ -2465,7 +2465,7 @@ section,
 
 .blog-details .article-body .main-content .content-block .split-content {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1fr;
   gap: 3rem;
   margin: 2rem 0;
 }
@@ -2536,7 +2536,14 @@ section,
   gap: 1rem;
 }
 
-.blog-details .article-body .main-content .content-block .split-content .monitoring-dashboard .vital-signs .vital-item {
+.blog-details .article-body .main-content .content-block .split-content .monitoring-dashboard .vital-signs1 {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+}
+
+.blog-details .article-body .main-content .content-block .split-content .monitoring-dashboard .vital-signs .vital-item,
+.blog-details .article-body .main-content .content-block .split-content .monitoring-dashboard .vital-signs1 .vital-item {
   padding: 1rem;
   background: color-mix(in srgb, var(--accent-color), transparent 95%);
   border-radius: 8px;
@@ -2545,13 +2552,15 @@ section,
   align-items: center;
 }
 
-.blog-details .article-body .main-content .content-block .split-content .monitoring-dashboard .vital-signs .vital-item .vital-label {
+.blog-details .article-body .main-content .content-block .split-content .monitoring-dashboard .vital-signs .vital-item .vital-label ,
+.blog-details .article-body .main-content .content-block .split-content .monitoring-dashboard .vital-signs1 .vital-item .vital-label {
   font-size: 1.2rem;
   color: color-mix(in srgb, var(--default-color), transparent 30%);
   font-weight: 900;
 }
 
-.blog-details .article-body .main-content .content-block .split-content .monitoring-dashboard .vital-signs .vital-item .vital-value {
+.blog-details .article-body .main-content .content-block .split-content .monitoring-dashboard .vital-signs .vital-item .vital-value,
+.blog-details .article-body .main-content .content-block .split-content .monitoring-dashboard .vital-signs1 .vital-item .vital-value {
   font-weight: 600;
   color: var(--heading-color);
   font-size: 2rem;
@@ -4861,42 +4870,57 @@ section,
   }
 }
 
-:root{
-  /* 你可以調整這兩個變數來改整體配色 */
-  --table-green: #8cc63f;   /* 邊框綠 */
-  --cell-green-50: #f2fae8; /* 左欄淡綠底 */
+
+
+:root {
+  /* 柔和綠系主色 */
+  --table-green: #c8dfca;     /* 邊框綠 */
+  --row-green-dark: #d3e6d4;  /* 偶數行底色 */
+  --row-green-light: #edf5ed; /* 奇數行底色 */
 }
 
+/* 表格外觀 */
 .aqp-table.table {
   border-color: var(--table-green);
+  border-collapse: collapse;
+  width: 100%;
 }
+
+/* 格線、字體、內距 */
 .aqp-table.table > :not(caption) > * > * {
-  /* 讓所有格線都用綠色 */
   border-color: var(--table-green);
   vertical-align: middle;
   font-size: 1rem;
-}
-/* 左欄（欄名）背景與字重 */
-.aqp-th {
-  width: 28%;
-  background: var(--cell-green-50);
-  font-weight: 600;
-  white-space: nowrap;
-}
-/* 右欄內容 */
-.aqp-td {
-  background: #fff;
-}
-/* 讓表格外觀更接近截圖：較大的內距與行高 */
-.aqp-table.table > :not(caption) > * > * {
   padding: .9rem .75rem;
 }
-/* 手機上維持可橫向捲動，不會擠壓斷行 */
+
+/* 左右欄樣式統一 */
+.aqp-th,
+.aqp-td {
+  font-weight: 500;
+  border-right: 1px solid var(--table-green);
+}
+.aqp-th{
+  text-align: center;
+}
+
+
+/* 條紋底色（整列同色） */
+.aqp-table.table tr:nth-child(odd) > * {
+  background: var(--row-green-light);
+}
+.aqp-table.table tr:nth-child(even) > * {
+  background: var(--row-green-dark);
+}
+
+/* 手機可橫向捲動 */
 .table-responsive {
   border: 1px solid var(--table-green);
   border-radius: .25rem;
+  overflow-x: auto;
 }
-/* 連結外觀（“詳細資料”） */
+
+/* 連結樣式 */
 .aqp-link {
   color: #0d6efd;
   text-decoration: underline;
