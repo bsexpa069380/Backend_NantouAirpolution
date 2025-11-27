@@ -268,7 +268,7 @@
                       </div>
                       <div class="vital-item">
                         <span class="vital-label">長度</span>
-                        <span class="vital-value" id = purfication_lengthSum>300</span>
+                        <span class="vital-value" id = purfication_lengthSum>0</span>
                         <span class="vital-label">公尺</span>
                       </div>
                     </div>
@@ -284,7 +284,7 @@
                       </div>
                       <div class="vital-item">
                         <span class="vital-label">面積</span>
-                        <span class="vital-value" id = green_wall_areaSum>67800</span>
+                        <span class="vital-value" id = green_wall_areaSum>0</span>
                         <span class="vital-label">平方<br>公尺</span>
                       </div>
                     </div>
@@ -503,7 +503,7 @@
             <a href="index.html" class="logo d-flex align-items-center mb-3">
               <h4>南投縣政府環境保護局</h4>
             </a>
-            <p class="tagline">上班(服務)時間：<br>上午 08:00-12:00；下午 13:30-17:30 <br>(週六、日及例假日休息)</p>
+            <p class="tagline">上班(服務)時間：<br>上午 08:00-12:00；下午 13:30-17:30 <br>(週六、日及國定假日休息)</p>
 
             <div class="social-links mt-4">
               <a href="#" aria-label="Facebook"><i class="bi bi-facebook"></i></a>
@@ -592,6 +592,10 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
 <script>
+  function formatNumber(num) {
+  if (isNaN(num)) return num;
+  return Number(num).toLocaleString('en-US'); // or 'zh-TW' if you prefer
+}
   (function () {
     document.querySelectorAll('.map-wrap').forEach(function(wrap){
       const svg  = wrap.querySelector('svg');
@@ -736,33 +740,37 @@
 
     // Map API table names → HTML element IDs
     if (table === "purification_zones") {
-      document.getElementById("purfication_count").textContent = data.count;
-      document.getElementById("purfication_areaSum").textContent = data.area;
-      document.getElementById("purfication_lengthSum").textContent = data.length;
+      document.getElementById("purfication_count").textContent = formatNumber(data.count);
+      document.getElementById("purfication_areaSum").textContent = formatNumber(data.area);
+      document.getElementById("purfication_lengthSum").textContent = formatNumber(data.length);
+      
       
     } else if (table === "green_walls") {
-      document.getElementById("green_wall_count").textContent = data.count;
-      document.getElementById("green_wall_areaSum").textContent = data.area;
+      document.getElementById("green_wall_count").textContent = formatNumber(data.count);
+      document.getElementById("green_wall_areaSum").textContent = formatNumber(data.area);
      
       // if you also want to show length for green walls, add:
       // document.getElementById("green_wall_lengthSum").textContent = data.length;
     }
+    return data
     
 
   } catch (err) {
     console.error("Error fetching summary:", err);
   }
 }
-document.addEventListener("DOMContentLoaded", () => {
-  loadSummary("purification_zones"); 
-  loadSummary("green_walls"); 
-  const greenWallArea = parseFloat(document.getElementById("green_wall_areaSum").textContent) || 0;
-  const purificationLength = parseFloat(document.getElementById("purfication_lengthSum").textContent) || 0;
+document.addEventListener("DOMContentLoaded", async () => {
+  // 等兩個 summary 都抓回來
+  const [purData, wallData] = await Promise.all([
+    loadSummary("purification_zones"),
+    loadSummary("green_walls")
+  ]);
 
-  document.getElementById("total_areaSum").textContent = greenWallArea + purificationLength;
+  const purArea   = purData?.area   || 0;
+  const greenArea = wallData?.area  || 0;
+  const totalArea = purArea + greenArea;
 
-
-
+  document.getElementById("total_areaSum").textContent = formatNumber(totalArea);
 });
 
   })();

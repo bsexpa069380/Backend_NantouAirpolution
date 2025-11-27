@@ -63,7 +63,7 @@
           <div class="row d-flex justify-content-center text-center">
             <div class="col-lg-8">
               <h1 class="heading-title">基地查詢</h1>
-              <p class="mb-0">淨化區建置進度、活動紀錄與環境改善亮點，透過影像與文字分享南投縣推動永續的努力。透過照片、影音與文字故事，呈現綠化成果、社區參與及政策推動的點滴。.</p>
+              <p class="mb-0">提供空氣清淨綠牆基本資料查詢服務，協助快速掌握基地位置與相關資訊。.</p>
             </div>
           </div>
         </div>
@@ -97,7 +97,7 @@
               <option selected>不分類別</option>
               <option value="1">空氣品質淨化</option>
               <option value="2">綠美化</option>
-              <option value="3">空氣綠牆</option>
+              <option value="3">清淨綠牆</option>
             </select>
             <label for="floatingSelect">類別篩選</label>
           </div>
@@ -140,6 +140,7 @@
             </tbody>
             <thead class="table-primary sticky-top text-center" style="height: 60px; vertical-align:middle;">
               <tr>
+                <th scope="col">序號</th>
                 <th scope="col">年度</th>
                 <th scope="col">行政區</th>
                 <th scope="col">類別</th>
@@ -149,39 +150,7 @@
               </tr>
             </thead>
             <tbody>
-              <!-- <tr class="clickable-row" data-href="base-details.html">
-                <td>114</td>
-                <td>信義鄉</td>
-                <td>空氣品質淨化</td>
-                <td>嘉興國小空品淨化區設置計畫</td>
-                <td>嘉興國民小學</td>
-                <td>詳細資料➜</td>
-              </tr>
-              <tr class="clickable-row" data-href="base-details.html">
-                <td>115</td>
-                <td>信義鄉</td>
-                <td>空氣品質淨化</td>
-                <td>嘉興國小空品淨化區設置計畫</td>
-                <td>嘉興國民小學</td>
-                <td>詳細資料➜</td>
-              </tr>
-              <tr class="clickable-row" data-href="base-details.html">
-                <td>115</td>
-                <td>信義鄉</td>
-                <td>空氣品質淨化</td>
-                <td>嘉興國小空品淨化區設置計畫</td>
-                <td>嘉興國民小學</td>
-                <td>詳細資料➜</td>
-              </tr>
-              <tr class="clickable-row" data-href="base-details.html">
-                <td>115</td>
-                <td>信義鄉</td>
-                <td>空氣品質淨化</td>
-                <td>嘉興國小空品淨化區設置計畫</td>
-                <td>嘉興國民小學</td>
-                <td>詳細資料➜</td>
-              </tr>
-               -->
+              
 
             </tbody>
 
@@ -223,7 +192,7 @@
             <a href="index.html" class="logo d-flex align-items-center mb-3">
               <h4>南投縣政府環境保護局</h4>
             </a>
-            <p class="tagline">上班(服務)時間：<br>上午 08:00-12:00；下午 13:30-17:30 <br>(週六、日及例假日休息)</p>
+            <p class="tagline">上班(服務)時間：<br>上午 08:00-12:00；下午 13:30-17:30 <br>(週六、日及國定假日休息)</p>
 
             <div class="social-links mt-4">
               <a href="#" aria-label="Facebook"><i class="bi bi-facebook"></i></a>
@@ -247,7 +216,7 @@
                 <h5>基地介紹</h5>
                 <ul class="list-unstyled">
                   <li><a href="basequery.html?type=air">空氣品質淨化區</a></li>
-                  <li><a href="basequery.html?type=wall">清淨綠牆</a></li>
+                  <li><a href="basequery.html?type=wall">空氣綠牆</a></li>
                   <li><a href="basequery.html?type=green">綠美化</a></li>
                 </ul>
               </div>
@@ -449,10 +418,12 @@ document.addEventListener("DOMContentLoaded", () => {
   // Render one row
   function renderRow(rec, categoryLabel, detailsHrefBase='base-details.html') {
     const id         = pick(rec, 'id');
+    const serial   = pick(rec, "serial", "seq", "no") || "—";
     const year       = pick(rec, 'year', 'budget_year', 'project_year') || '—';
     const district   = pick(rec, 'district', 'township', 'area') || '—';
     const name       = pick(rec, 'name', 'project_name', 'site_name', 'title') || '—';
-    const maintainer = pick(rec, 'maintainer', 'maintenance_unit', 'owner_unit') || '—';
+    const maintainer = pick(rec, 'maintainer', 'maintain_unit', 'owner_unit') || '—';
+    const categoryText = pick(rec, "type", "category", "kind") || categoryLabel || "—";
 
     // Include type in details URL so the next page can hit the right API
     const typeParam = encodeURIComponent(categoryLabel);
@@ -462,9 +433,10 @@ document.addEventListener("DOMContentLoaded", () => {
     tr.className = 'clickable-row';
     tr.dataset.href = href;
     tr.innerHTML = `
+      <td>${serial}</td>
       <td>${year}</td>
       <td>${district}</td>
-      <td>${categoryLabel}</td>
+      <td>${escapeHtml(categoryText)}</td>
       <td>${escapeHtml(name)}</td>
       <td>${escapeHtml(maintainer)}</td>
       <td>詳細資料➜</td>
@@ -559,4 +531,41 @@ document.addEventListener("DOMContentLoaded", () => {
   // Initial load
   document.addEventListener('DOMContentLoaded', loadAndRender);
 })();
+document.addEventListener("DOMContentLoaded", () => {
+  const params   = new URLSearchParams(window.location.search);
+  const typeParam = params.get("type");  // 例如：空氣品質淨化區 / 清淨綠牆 / 綠美化
+
+  // 1️⃣ 動態改標題 & 說明文字
+  const h1 = document.querySelector(".heading-title");
+  const p  = document.querySelector(".page-title .mb-0");
+
+  if (typeParam) {
+    if (h1) h1.textContent = `基地查詢｜${typeParam}`;
+    if (p)  p.textContent  = `提供${typeParam}基本資料查詢服務，協助快速掌握基地位置與相關資訊。`;
+  }
+
+  // 2️⃣ 後台 Label → 下拉選單文字 的對照表
+  const typeMap = {
+    "空氣品質淨化區": "空氣品質淨化",
+    "空氣品質淨化":  "空氣品質淨化",
+    "綠美化":        "綠美化",
+    "清淨綠牆":      "清淨綠牆",   // ✅ 後台叫清淨綠牆，下拉其實是空氣綠牆
+  };
+
+  const select = document.getElementById("air-type");
+  if (select && typeParam) {
+    const targetLabel = typeMap[typeParam] || typeParam;
+
+    [...select.options].forEach(opt => {
+      const txt = opt.textContent.trim();
+      if (txt === targetLabel) {
+        opt.selected = true;
+      }
+    });
+
+    // 3️⃣ 觸發 change，讓 loadAndRender() 用正確類別重新查一次
+    select.dispatchEvent(new Event("change"));
+  }
+});
+
 </script>
