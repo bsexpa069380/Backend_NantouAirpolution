@@ -116,7 +116,7 @@
 
             <div class="swiper-slide">
               <div class="blog-hero-item">
-                <img src="assets/img/blog/group-eco-volunteers-leaving-park-after-cleaning-lawns.jpg" alt="Blog Hero Image" class="img-fluid">
+                <img src="assets/img/blog/index_img_2.png" alt="Blog Hero Image" class="img-fluid">
                 <div class="blog-hero-content">
                  
                   <a href="blog-details.html">
@@ -131,7 +131,7 @@
 
             <div class="swiper-slide">
               <div class="blog-hero-item">
-                <img src="assets/img/blog/climbing-vines-wrap-around-structures-creating-natural-privacy-screens-otherwise-urban-setting.jpg" alt="Blog Hero Image" class="img-fluid">
+                <img src="assets/img/blog/index_img_1.jpg" alt="Blog Hero Image" class="img-fluid">
                 <div class="blog-hero-content">
                   <h1>空氣品質淨化區及空氣清淨綠牆暨綠美化資訊網</h1>
                   <div class="meta">
@@ -585,6 +585,107 @@
   <!-- Main JS File -->
   <script src="assets/js/main.js"></script>
 
+  <script>
+    (() => {
+      const API_BASE = "";        // same origin
+      const RESOURCE = "result";  // 跟 articles.html 一樣打 /api/result
+    
+      // 找首頁「最新消息」那一格的 row
+      const listRow = document.querySelector('#latest-posts .col-lg-12 > .row');
+      if (!listRow) {
+        console.warn("[home latest-posts] 容器不存在");
+        return;
+      }
+    
+      // 先清空原本寫死的兩篇假資料
+      listRow.innerHTML = "";
+    
+      // 小工具
+      const esc = (s) => (s == null ? "" : String(s));
+      const fmtDate = (d) => {
+        if (!d) return "";
+        const dt = new Date(d);
+        if (isNaN(dt)) return esc(d);   // 後端已排版好的就直接用
+        const y = dt.getFullYear();
+        const m = String(dt.getMonth() + 1).padStart(2, "0");
+        const day = String(dt.getDate()).padStart(2, "0");
+        return `${y}.${m}.${day}`;
+      };
+      const excerpt = (txt, n = 110) => {
+        const s = esc(txt).replace(/\s+/g, " ").trim();
+        return s.length > n ? s.slice(0, n - 1) + "…" : s;
+      };
+      const detailURL = (id) => `articles-details.html?id=${encodeURIComponent(id)}`;
+    
+      async function loadLatest() {
+        try {
+          const url = `${API_BASE}/api/${RESOURCE}`;
+          console.log("[home latest-posts] fetch:", url);
+    
+          const res = await fetch(url, { credentials: "same-origin" });
+          console.log("[home latest-posts] status:", res.status);
+    
+          if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    
+          const data = await res.json();
+          console.log("[home latest-posts] data:", data);
+    
+          if (!Array.isArray(data) || data.length === 0) {
+            listRow.innerHTML = `
+              <div class="col-12">
+                <div class="alert alert-secondary">目前尚無最新消息。</div>
+              </div>`;
+            return;
+          }
+    
+          // ⭐ 取最新 2 筆（假設後端已經 ORDER BY date DESC）
+          const items = data.slice(0, 2);
+    
+          items.forEach((it, idx) => {
+            const id        = it.id;
+            const title     = it.title || "(未命名)";
+            const body      = it.content || "";
+            const dateStr   = fmtDate(it.date);
+            const category  = it.category || "最新花絮";
+            const cover     = it.image_url || "https://placehold.co/800x450?text=No+Image";
+    
+            const col = document.createElement("div");
+            col.className = "col-12";
+            col.setAttribute("data-aos", "fade-left");
+            col.setAttribute("data-aos-delay", String(200 + idx * 100));
+    
+            col.innerHTML = `
+              <article class="compact-post h-100">
+                <div class="thumb">
+                  <img src="${esc(cover)}" class="img-fluid" alt="Post thumbnail" loading="lazy">
+                </div>
+                <div class="content">
+                  <div class="meta">
+                    <span class="date">${esc(dateStr)}</span>
+                    <span class="dot">•</span>
+                    <span class="category">${esc(category)}</span>
+                  </div>
+                  <h4 class="title">${esc(title)}</h4>
+                  <p>${excerpt(body)}</p>
+                  <a href="${detailURL(id)}" class="readmore">
+                    <span>閱讀更多</span><i class="bi bi-arrow-right"></i>
+                  </a>
+                </div>
+              </article>`;
+            listRow.appendChild(col);
+          });
+        } catch (err) {
+          console.error("[home latest-posts] 載入失敗：", err);
+          listRow.innerHTML = `
+            <div class="col-12">
+              <div class="alert alert-danger">最新消息載入失敗，請稍後再試。</div>
+            </div>`;
+        }
+      }
+    
+      loadLatest();
+    })();
+    </script>
 </body>
 
 </html>

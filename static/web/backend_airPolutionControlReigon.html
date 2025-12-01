@@ -355,7 +355,7 @@ document.addEventListener("DOMContentLoaded", function () {
         document.getElementById("maintain_unit").value = data.maintain_unit || "";
         document.getElementById("adopt_unit").value = data.adopt_unit || "";
         document.getElementById("area").value = data.area || "";
-        document.getElementById("length").value = data.length || "";
+        document.getElementById("length").value = data.length ?? "";
         document.getElementById("subsidy_source").value = data.subsidy_source || "";
         const startDate = data.maintain_start_date;
         const endDate = data.maintain_end_date;
